@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aadhaar Service Dashboard - Government of India</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Crimson+Pro:wght@600;700&display=swap');
+
+    :root {
+      --color-saffron: #f97316;
+      --color-white: #ffffff;
+      --color-green: #15803d;
+      --color-blue: #1e40af;
+      --color-neutral-dark: #0f172a;
+      --color-neutral-light: #f8fafc;
+      --color-accent: #ea580c;
+    }
+
+    body {
+      position: relative;
+      background-color: #f8fafc;
+    }
+
+/* Blurred static background image */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("bg.jpg"); /* your image path */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: blur(6px);
+      transform: scale(1.05); /* prevents blur edges */
+      opacity: 0.25;          /* soft, professional */
+      z-index: -1;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .font-display {
+      font-family: 'Crimson Pro', serif;
+    }
+
+    .gradient-flag {
+      background: linear-gradient(90deg, var(--color-saffron) 0%, var(--color-white) 50%, var(--color-green) 100%);
+    }
+
+    .card-elevated {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 13px rgba(0, 0, 0, 0.1);
+    }
+
+    .accent-line {
+      border-left: 4px solid var(--color-saffron);
+    }
+
+    .markdown {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #334155;
+    }
+
+    .markdown strong {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .markdown ul,
+    .markdown ol {
+      margin-left: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .markdown li {
+      margin-bottom: 0.4rem;
+    }
+
+    .markdown p {
+      margin-bottom: 0.75rem;
+    }
+
+    .markdown code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body class="bg-neutral-light text-neutral-900" style="background-color: var(--color-neutral-light);">
+
+<div class="min-h-screen relative z-10">
+  
+    <!-- Header with Indian Flag Accent -->
+<header class="bg-white border-b-4 gradient-flag card-elevated">
+  <div class="max-w-7xl mx-auto px-6 py-6">
+    <div class="flex items-center justify-between gap-6">
+      
+      <!-- Left -->
+    <div class="max-w-xl">
+      <div class="flex items-baseline gap-3">
+        <h1 class="text-4xl font-display font-bold tracking-tight text-slate-900">
+          Aadhaar
+        </h1>
+        <span class="text-lg font-semibold text-green-700">
+          Service Dashboard
+        </span>
+      </div>
+
+    <p class="mt-1 text-sm font-medium text-slate-600">
+    Government of India – Unique Identity Authority of India
+    </p>
+
+    <!-- Centered description line -->
+    <p class="mt-5 text-sm font-medium text-slate-700 text-center">
+      Interactive dashboard to monitor Aadhaar service stress across districts
+    </p>
+  </div>
+
+
+      <!-- Right Logo -->
+      <img
+        src="logo.svg"
+        alt="Aadhaar Logo"
+        class="max-h-[96px] md:max-h-[110px] w-auto object-contain"
+      />
+
+</header>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+
+      <!-- Controls Section -->
+      <div class="bg-white rounded-xl card-elevated p-8 mb-8 sticky top-6 z-40">
+        <h2 class="text-xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Dashboard Filters</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div>
+            <label class="block text-sm font-semibold mb-3" style="color: var(--color-neutral-dark);">State</label>
+            <select id="state" class="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-orange-500 focus:outline-none transition" style="border-color: #e5e7eb;">
+              <option value="">Select a state</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-3" style="color: var(--color-neutral-dark);">District</label>
+            <select id="district" class="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-orange-500 focus:outline-none transition" style="border-color: #e5e7eb;">
+              <option value="">Select a district</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-3" style="color: var(--color-neutral-dark);">Date</label>
+            <select id="date" class="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-orange-500 focus:outline-none transition" style="border-color: #e5e7eb;">
+              <option value="">Select a date</option>
+            </select>
+          </div>
+          <div class="flex items-end md:col-span-2 lg:col-span-2">
+            <button onclick="fetchAllData()" class="w-full px-6 py-2 rounded-lg font-semibold text-white transition transform hover:scale-105 active:scale-95" style="background-color: var(--color-saffron);">
+              Load Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Content -->
+      <div id="dashboard" class="space-y-8">
+        
+        <!-- Risk Verdict Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Verdict Card -->
+          <div id="verdictCard" class="rounded-xl card-elevated overflow-hidden border-l-4" style="border-left-color: var(--color-green);">
+            <div class="bg-white p-8">
+              <h2 class="text-2xl font-bold mb-6" style="color: var(--color-neutral-dark);">Risk Assessment</h2>
+              <div class="flex items-center gap-4 mb-6">
+                <div id="verdictBadge" class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                  <span id="verdictText" class="text-2xl font-bold" style="color: var(--color-green);">-</span>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600 mb-1">Current Status</p>
+                  <p id="verdictTextLabel" class="text-lg font-semibold" style="color: var(--color-neutral-dark);">-</p>
+                </div>
+              </div>
+              <p id="verdictDesc" class="text-gray-700 leading-relaxed">-</p>
+            </div>
+          </div>
+
+          <!-- Percentile Card -->
+          <div id="percentileCard" class="rounded-xl card-elevated overflow-hidden border-l-4" style="border-left-color: var(--color-blue);">
+            <div class="bg-white p-8">
+              <h2 class="text-2xl font-bold mb-6" style="color: var(--color-neutral-dark);">Comparative Analysis</h2>
+              <div class="text-center">
+                <p class="text-sm text-gray-600 mb-2">Risk Percentile Ranking</p>
+                <p id="percentileText" class="text-5xl font-bold" style="color: var(--color-blue);">-</p>
+                <p class="text-gray-600 mt-2 text-sm">Among all districts nationwide</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key Metrics Grid -->
+        <div class="bg-white rounded-xl card-elevated p-8">
+          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Performance Metrics</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="p-6 rounded-lg" style="background-color: rgba(249, 115, 22, 0.05); border-left: 3px solid var(--color-saffron);">
+              <p class="text-sm font-medium text-gray-600 mb-2">Service Stress Risk Score</p>
+              <p id="metric-risk" class="text-3xl font-bold" style="color: var(--color-saffron);">-</p>
+              <p class="text-xs text-gray-500 mt-2">0.0 - 1.0 scale</p>
+            </div>
+            <div class="p-6 rounded-lg" style="background-color: rgba(21, 128, 61, 0.05); border-left: 3px solid var(--color-green);">
+              <p class="text-sm font-medium text-gray-600 mb-2">Biometric-to-Enrollment Ratio</p>
+              <p id="metric-bio" class="text-3xl font-bold" style="color: var(--color-green);">-</p>
+              <p class="text-xs text-gray-500 mt-2">Performance indicator</p>
+            </div>
+            <div class="p-6 rounded-lg" style="background-color: rgba(30, 64, 175, 0.05); border-left: 3px solid var(--color-blue);">
+              <p class="text-sm font-medium text-gray-600 mb-2">Child Update Pressure</p>
+              <p id="metric-child" class="text-3xl font-bold" style="color: var(--color-blue);">-</p>
+              <p class="text-xs text-gray-500 mt-2">Demand indicator</p>
+            </div>
+            <div class="p-6 rounded-lg" style="background-color: rgba(234, 88, 12, 0.05); border-left: 3px solid var(--color-accent);">
+              <p class="text-sm font-medium text-gray-600 mb-2">Elderly Update Pressure</p>
+              <p id="metric-elderly" class="text-3xl font-bold" style="color: var(--color-accent);">-</p>
+              <p class="text-xs text-gray-500 mt-2">Demand indicator</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Trend Chart -->
+          <div class="bg-white rounded-xl card-elevated p-8">
+            <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Risk Trend</h2>
+            <canvas id="trendChart"></canvas>
+          </div>
+
+          <!-- Top Districts Chart -->
+          <div class="bg-white rounded-xl card-elevated p-8">
+            <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Top 10 High-Risk Districts (OVERALL)</h2>
+            <canvas id="topChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Hotspots Table -->
+        <div class="bg-white rounded-xl card-elevated p-8">
+          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">High-Risk Hotspots</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="border-b-2" style="border-color: var(--color-saffron);">
+                <tr>
+                  <th class="text-left py-4 px-4 font-semibold" style="color: var(--color-neutral-dark);">District</th>
+                  <th class="text-left py-4 px-4 font-semibold" style="color: var(--color-neutral-dark);">Average Risk Score</th>
+                </tr>
+              </thead>
+              <tbody id="hotspotsList">
+                <tr class="border-b border-gray-200">
+                  <td class="py-4 px-4 text-gray-600">Loading...</td>
+                  <td class="py-4 px-4 text-gray-600">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Risk Explanation -->
+        <div class="bg-white rounded-xl card-elevated p-8">
+          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Risk Analysis</h2>
+          <div
+              id="explanationText"
+              class="markdown p-6 rounded-lg bg-gray-50 border-l-4 text-sm"
+              style="border-color: var(--color-green);"
+            >
+          </div>
+        </div>
+
+        <!-- AI Policy Recommendation -->
+        <div class="bg-white rounded-xl card-elevated p-8">
+          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Policy Recommendations</h2>
+          <button onclick="generateRecommendation()" class="px-6 py-3 rounded-lg font-semibold text-white transition transform hover:scale-105 active:scale-95 mb-6" style="background-color: var(--color-green);">
+            Generate AI Recommendation
+          </button>
+          <div id="recommendationText"class="markdown p-6 rounded-lg bg-green-50 border-l-4 text-sm"style="border-color: var(--color-green);">Click button to generate</div>
+        </div>
+
+        <!-- Model Reliability -->
+        <div class="bg-white rounded-xl card-elevated p-8 border-l-4" style="border-color: var(--color-blue);">
+          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Model Reliability</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div>
+              <p class="text-sm text-gray-600 mb-2">Mean Absolute Error</p>
+              <p class="text-3xl font-bold" style="color: var(--color-saffron);">0.0001</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600 mb-2">Root Mean Squared Error</p>
+              <p class="text-3xl font-bold" style="color: var(--color-saffron);">0.0003</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600 mb-2">Spearman Rank Correlation</p>
+              <p class="text-3xl font-bold" style="color: var(--color-green);">0.999</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600 mb-2">Top-20 Risk Stability</p>
+              <p class="text-3xl font-bold" style="color: var(--color-green);">100.0%</p>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg" style="background-color: rgba(30, 64, 175, 0.1); border-left: 3px solid var(--color-blue);">
+            <p class="text-sm text-gray-700 leading-relaxed">
+              This model predicts continuous risk scores and is evaluated on prediction stability and ranking consistency. Low error metrics combined with high rank correlation indicate reliable identification of relative risk levels, making it suitable for policy decision support.
+            </p>
+          </div>
+        </div>
+
+        <!-- Governance Impact -->
+        <div class="bg-gradient-to-br from-blue-50 to-green-50 rounded-xl card-elevated p-8">
+          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Governance Impact</h2>
+          <p class="text-gray-700 mb-6 font-medium">This dashboard enables data-driven Aadhaar ecosystem governance through:</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-4 bg-white rounded-lg">
+              <h3 class="font-semibold mb-2" style="color: var(--color-saffron);">Proactive Planning</h3>
+              <p class="text-gray-600 text-sm">Identify emerging stress points before service disruptions occur, enabling preemptive resource allocation.</p>
+            </div>
+            <div class="p-4 bg-white rounded-lg">
+              <h3 class="font-semibold mb-2" style="color: var(--color-green);">Targeted Intervention</h3>
+              <p class="text-gray-600 text-sm">Pinpoint specific districts requiring attention, ensuring efficient deployment of resources and services.</p>
+            </div>
+            <div class="p-4 bg-white rounded-lg">
+              <h3 class="font-semibold mb-2" style="color: var(--color-blue);">Data-Driven Decisions</h3>
+              <p class="text-gray-600 text-sm">Transform operational data into actionable insights supporting evidence-based policy decisions.</p>
+            </div>
+            <div class="p-4 bg-white rounded-lg">
+              <h3 class="font-semibold mb-2" style="color: var(--color-accent);">Service Excellence</h3>
+              <p class="text-gray-600 text-sm">Minimize delays in Aadhaar updates and enrollments, maintaining public trust in the system.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transparency Note -->
+        <div class="bg-white rounded-xl card-elevated p-8 border-l-4" style="border-color: var(--color-green);">
+          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">System Transparency</h2>
+          <div class="space-y-4">
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style="background-color: var(--color-saffron);">1</div>
+              <div>
+                <p class="font-semibold" style="color: var(--color-neutral-dark);">ML Model</p>
+                <p class="text-gray-600 text-sm">Generates quantitative risk scores based on operational data using statistical models.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style="background-color: var(--color-green);">2</div>
+              <div>
+                <p class="font-semibold" style="color: var(--color-neutral-dark);">AI Insights</p>
+                <p class="text-gray-600 text-sm">Provides contextual explanations and policy suggestions based on data patterns.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style="background-color: var(--color-blue);">3</div>
+              <div>
+                <p class="font-semibold" style="color: var(--color-neutral-dark);">Human Oversight</p>
+                <p class="text-gray-600 text-sm">Final decisions remain with administrative authorities and government officials.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Download Section -->
+        <div class="bg-white rounded-xl card-elevated p-8">
+          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Data Export</h2>
+          <p class="text-gray-700 mb-6">Download ranked district stress data for further analysis and reporting.</p>
+          <button onclick="downloadRankedData()" class="px-8 py-3 rounded-lg font-semibold text-white transition transform hover:scale-105 active:scale-95" style="background-color: var(--color-saffron);">
+            Download as CSV
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-neutral-dark text-white mt-16 py-8 border-t-4 gradient-flag">
+      <div class="max-w-7xl mx-auto px-6 text-center">
+        <p class="text-gray-400">Government of India | Unique Identity Authority of India (UIDAI)</p>
+        <p class="text-gray-500 text-sm mt-2">Aadhaar Service Dashboard &bull; Data-Driven Governance</p>
+      </div>
+    </footer>
+  </div>
+
+<script>
+const API_URL = "http://localhost:8000";
+let currentState = "", currentDistrict = "", currentDate = "";
+let trendChart = null, topChart = null;
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadStates();
+  document.getElementById("state").addEventListener("change", loadDistricts);
+  document.getElementById("district").addEventListener("change", loadDates);
+});
+
+async function loadStates() {
+  try {
+    const res = await fetch(`${API_URL}/states`);
+    const states = await res.json();
+    const stateSelect = document.getElementById("state");
+    stateSelect.innerHTML = '<option value="">Select a state</option>' +
+      states.map(s => `<option value="${s}">${s}</option>`).join("");
+  } catch (err) {
+    console.error("Error loading states:", err);
+  }
+}
+
+async function loadDistricts() {
+  const state = document.getElementById("state").value;
+  if (!state) {
+    document.getElementById("district").innerHTML = '<option value="">Select a district</option>';
+    document.getElementById("date").innerHTML = '';
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}/districts/${state}`);
+    const districts = await res.json();
+    const districtSelect = document.getElementById("district");
+    districtSelect.innerHTML = '<option value="">Select a district</option>' +
+      districts.map(d => `<option value="${d}">${d}</option>`).join("");
+    document.getElementById("date").innerHTML = '';
+  } catch (err) {
+    console.error("Error loading districts:", err);
+  }
+}
+
+async function loadDates() {
+  const state = document.getElementById("state").value;
+  const district = document.getElementById("district").value;
+  
+  if (!state || !district) {
+    document.getElementById("date").innerHTML = '';
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/dates/${encodeURIComponent(state)}/${encodeURIComponent(district)}`);
+    const dates = await res.json();
+    const dateSelect = document.getElementById("date");
+    dateSelect.innerHTML = '<option value="">Select a date</option>' +
+      dates.map(d => `<option value="${d}">${d}</option>`).join("");
+  } catch (err) {
+    console.error("Error loading dates:", err);
+  }
+}
+
+function clearAIOutputs() {
+  const recEl = document.getElementById("recommendationText");
+  if (recEl) {
+    recEl.innerHTML = "<em>Generate AI recommendation for this selection.</em>";
+  }
+
+  const expEl = document.getElementById("explanationText");
+  if (expEl) {
+    expEl.innerHTML = "<em>Load dashboard to view risk analysis.</em>";
+  }
+}
+
+async function fetchAllData() {
+  clearAIOutputs();
+  const state = document.getElementById("state").value;
+  const district = document.getElementById("district").value;
+  const date = document.getElementById("date").value;
+
+  if (!state || !district || !date) {
+    alert("Please select state, district, and date");
+    return;
+  }
+
+  currentState = state;
+  currentDistrict = district;
+  currentDate = date;
+
+  try {
+    const [risk, percentile, trend, topDistricts, hotspots, explanation] = await Promise.all([
+      fetch(`${API_URL}/risk?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&date=${date}`).then(r => r.json()),
+      fetch(`${API_URL}/risk-percentile/${encodeURIComponent(state)}/${encodeURIComponent(district)}/${date}`).then(r => r.json()),
+      fetch(`${API_URL}/risk-trend/${encodeURIComponent(state)}/${encodeURIComponent(district)}`).then(r => r.json()),
+      fetch(`${API_URL}/top-districts`).then(r => r.json()),
+      fetch(`${API_URL}/district-hotspots/${encodeURIComponent(state)}`).then(r => r.json()),
+      fetch(`${API_URL}/risk-explanation/${encodeURIComponent(state)}/${encodeURIComponent(district)}/${date}`).then(r => r.json()).catch(() => ({ explanation: "Loading..." }))
+    ]);
+
+    if (risk.error) {
+      alert("No data found: " + risk.error);
+      return;
+    }
+
+    const verdictRes = await fetch(`${API_URL}/risk-verdict/${risk.risk_score}`).then(r => r.json());
+
+    updateMetrics(risk);
+    updateVerdict(verdictRes);
+    updatePercentile(percentile);
+    updateTrend(trend);
+    updateTopDistricts(topDistricts);
+    updateHotspots(hotspots);
+    updateExplanation(explanation);
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    alert("Error loading dashboard: " + err.message);
+  }
+}
+
+function updateMetrics(data) {
+  const fmt = (v) => v === null ? "N/A" : v.toFixed(4);
+  document.getElementById("metric-risk").textContent = fmt(data.risk_score);
+  document.getElementById("metric-bio").textContent = fmt(data.bio_ratio);
+  document.getElementById("metric-child").textContent = fmt(data.child_pressure);
+  document.getElementById("metric-elderly").textContent = fmt(data.elderly_pressure);
+}
+
+function updateVerdict(verdict) {
+  const colors = {
+    "LOW": { bg: "bg-green-100", text: "#15803d", label: "Low Risk" },
+    "MEDIUM": { bg: "bg-yellow-100", text: "#b45309", label: "Medium Risk" },
+    "HIGH": { bg: "bg-red-100", text: "#b91c1c", label: "High Risk" }
+  };
+  const color = colors[verdict.verdict] || colors["MEDIUM"];
+  document.getElementById("verdictBadge").className = `w-16 h-16 rounded-full flex items-center justify-center ${color.bg}`;
+  document.getElementById("verdictText").textContent = verdict.verdict.charAt(0);
+  document.getElementById("verdictText").style.color = color.text;
+  document.getElementById("verdictTextLabel").textContent = color.label;
+  document.getElementById("verdictDesc").textContent = verdict.description;
+}
+
+function updatePercentile(data) {
+  document.getElementById("percentileText").textContent = data.comparison;
+}
+
+function updateTrend(data) {
+  if (!data.data || data.data.length === 0) return;
+  const labels = data.data.map(d => d.date);
+  const values = data.data.map(d => d.risk_score || 0);
+  if (trendChart) trendChart.destroy();
+  const ctx = document.getElementById("trendChart").getContext("2d");
+  trendChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Risk Score",
+        data: values,
+        borderColor: "#f97316",
+        backgroundColor: "rgba(249, 115, 22, 0.1)",
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: "#1f2937" } } },
+      scales: {
+        y: { ticks: { color: "#1f2937" }, grid: { color: "#e5e7eb" } },
+        x: { ticks: { color: "#1f2937" }, grid: { color: "#e5e7eb" } }
+      }
+    }
+  });
+}
+
+function updateTopDistricts(data) {
+  if (!data || data.length === 0) return;
+  const labels = data.map(d => d.district);
+  const values = data.map(d => d.average_risk);
+  if (topChart) topChart.destroy();
+  const ctx = document.getElementById("topChart").getContext("2d");
+  topChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "Average Risk Score", data: values, backgroundColor: "#15803d" }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: "#1f2937" } } },
+      scales: {
+        y: { ticks: { color: "#1f2937" }, grid: { color: "#e5e7eb" } },
+        x: { ticks: { color: "#1f2937" }, grid: { color: "#e5e7eb" } }
+      }
+    }
+  });
+}
+
+function updateHotspots(data) {
+  const html = data.map((d, i) => `
+    <tr class="border-b border-gray-200 hover:bg-gray-50">
+      <td class="py-3 px-4 text-gray-800">${d.district}</td>
+      <td class="py-3 px-4"><span class="inline-block px-3 py-1 rounded-full text-sm font-semibold" style="background-color: rgba(249, 115, 22, 0.1); color: var(--color-saffron);">${d.average_risk.toFixed(4)}</span></td>
+    </tr>
+  `).join("");
+  document.getElementById("hotspotsList").innerHTML = html;
+}
+
+function updateExplanation(data) {
+  const el = document.getElementById("explanationText");
+  el.innerHTML = marked.parse(data.explanation || "Loading...");
+}
+
+async function generateRecommendation() {
+  if (!currentState || !currentDistrict || !currentDate) {
+    alert("Please load dashboard first");
+    return;
+  }
+
+  const el = document.getElementById("recommendationText");
+  el.innerHTML = "<em>Generating recommendation...</em>";
+
+  try {
+    const res = await fetch(
+      `${API_URL}/policy-recommendation/${encodeURIComponent(currentState)}/${encodeURIComponent(currentDistrict)}/${currentDate}`
+    );
+    const data = await res.json();
+
+    el.innerHTML = marked.parse(data.recommendation || "No recommendations available.");
+  } catch (err) {
+    el.innerHTML = `<strong>Error:</strong> ${err.message}`;
+  }
+}
+
+async function downloadRankedData() {
+  try {
+    const res = await fetch(`${API_URL}/download-ranked-data`);
+
+    // 🚨 Check if backend actually returned CSV
+    const contentType = res.headers.get("content-type");
+
+    if (!res.ok) {
+      throw new Error("Server error while generating CSV");
+    }
+
+    if (!contentType || !contentType.includes("text/csv")) {
+      // Backend sent JSON or empty response
+      const text = await res.text();
+      throw new Error("Invalid CSV response:\n" + text);
+    }
+
+    const blob = await res.blob();
+
+    if (blob.size === 0) {
+      throw new Error("CSV file is empty");
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "aadhaar-district-stress-data.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+  } catch (err) {
+    alert("CSV Download Failed:\n" + err.message);
+    console.error(err);
+  }
+}
+</script>
+
+</body>
+</html>
