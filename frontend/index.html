@@ -31,7 +31,7 @@
       content: "";
       position: fixed;
       inset: 0;
-      background-image: url("bg.jpg"); /* your image path */
+      background-image: url("/static/bg.jpg"); /* your image path */
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -39,6 +39,7 @@
       transform: scale(1.05); /* prevents blur edges */
       opacity: 0.25;          /* soft, professional */
       z-index: -1;
+      pointer-events: none;
     }
 
     body {
@@ -98,12 +99,10 @@
 
 <div class="min-h-screen relative z-10">
   
-    <!-- Header with Indian Flag Accent -->
 <header class="bg-white border-b-4 gradient-flag card-elevated">
   <div class="max-w-7xl mx-auto px-6 py-6">
     <div class="flex items-center justify-between gap-6">
       
-      <!-- Left -->
     <div class="max-w-xl">
       <div class="flex items-baseline gap-3">
         <h1 class="text-4xl font-display font-bold tracking-tight text-slate-900">
@@ -118,16 +117,13 @@
     Government of India – Unique Identity Authority of India
     </p>
 
-    <!-- Centered description line -->
     <p class="mt-5 text-sm font-medium text-slate-700 text-center">
       Interactive dashboard to monitor Aadhaar service stress across districts
     </p>
   </div>
 
-
-      <!-- Right Logo -->
       <img
-        src="logo.svg"
+        src="/static/logo.svg"
         alt="Aadhaar Logo"
         class="max-h-[96px] md:max-h-[110px] w-auto object-contain"
       />
@@ -386,7 +382,7 @@
   </div>
 
 <script>
-const API_URL = "http://localhost:8000";
+const API_URL = "https://aadhaar-service-dashboard.onrender.com";
 let currentState = "", currentDistrict = "", currentDate = "";
 let trendChart = null, topChart = null;
 
