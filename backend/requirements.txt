@@ -9,3 +9,4 @@ scipy
 google-generativeai
 python-dotenv
 uvicorn
+statsmodels

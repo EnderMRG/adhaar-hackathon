@@ -9,6 +9,10 @@ import google.generativeai as genai
 from fastapi.responses import StreamingResponse
 import csv
 import io
+from statsmodels.tsa.arima.model import ARIMA
+
+
+
 
 
 load_dotenv()
@@ -160,10 +164,66 @@ def get_risk_trend(state: str, district: str):
     ]
     return {"data": trend}
 
+def get_forecast_confidence(series, forecast):
+    n = len(series)
+    volatility = series.std()
+    forecast_spread = max(forecast) - min(forecast) if forecast else 0
+
+    if n < 6 or volatility > 0.02 or forecast_spread > 0.02:
+        return "LOW"
+    elif n < 12 or volatility > 0.01:
+        return "MEDIUM"
+    else:
+        return "HIGH"
+
+
+def get_forecast_for_district(state: str, district: str, steps: int = 6):
+    data = df[
+        (df["state"] == state) &
+        (df["district"] == district)
+    ].sort_values("date")
+
+    series = (
+        data
+        .set_index("date")["service_stress_risk"]
+        .dropna()
+        .asfreq("MS")  # Monthly Start
+    )
+
+    if len(series) < 8:
+        last_value = float(series[-1])
+
+        forecast = [last_value for _ in range(steps)]
+
+        return forecast, "stable", "LOW"
+    
+    # ---- ARIMA FORECAST (MAIN PATH) ----
+    model = ARIMA(series, order=(2, 1, 2))
+    model_fit = model.fit()
+
+    forecast = model_fit.forecast(steps=steps).tolist()
+
+    first, last = forecast[0], forecast[-1]
+    if last > first * 1.05:
+        trend = "increasing"
+    elif last < first * 0.95:
+        trend = "decreasing"
+    else:
+        trend = "stable"
+
+    confidence = get_forecast_confidence(series, forecast)
+
+    return forecast, trend, confidence
+
+
+
+
 @app.get("/policy-recommendation/{state}/{district}/{date}")
 def get_policy_recommendation(state: str, district: str, date: str):
     """Generate comprehensive policy recommendation based on risk data"""
     try:
+        recommendation = ""
+
         row = df[
             (df["state"] == state) &
             (df["district"] == district) &
@@ -178,9 +238,19 @@ def get_policy_recommendation(state: str, district: str, date: str):
         bio_ratio = float(r["biometric_to_enrolment_ratio"]) if not pd.isna(r["biometric_to_enrolment_ratio"]) else 0
         child_pressure = float(r["child_update_pressure"]) if not pd.isna(r["child_update_pressure"]) else 0
         elderly_pressure = float(r["elderly_update_pressure"]) if not pd.isna(r["elderly_update_pressure"]) else 0
+
+        forecast, future_trend, confidence = get_forecast_for_district(state, district)
+
+        avg_future_risk = sum(forecast) / len(forecast) if forecast else risk_score
+        print("POLICY AI → TREND:", future_trend, "AVG:", avg_future_risk)
+
         
         # Generate comprehensive recommendations based on data
-        recommendation = "**Actionable Policy Recommendations for Administrative Authorities**\n\n"
+        recommendation += (
+            f"**Forecast Context:**\n"
+            f"• Trend: **{future_trend.upper()}**\n"
+            f"• Confidence: **{confidence}**\n\n"
+        )
         
         recommendations = []
         
@@ -227,17 +297,28 @@ def get_policy_recommendation(state: str, district: str, date: str):
             })
         
         # Overall risk recommendations
-        if risk_score > 0.04:
+        if risk_score > 0.04 or future_trend == "increasing":
             recommendations.insert(0, {
-                "priority": "CRITICAL",
-                "title": "Emergency Service Review",
-                "description": "The risk score indicates critical service stress. Conduct an immediate operational audit to identify bottlenecks, reallocate resources from low-pressure districts if possible, and consider temporary service restrictions (appointment-only enrollment) to prevent system breakdown."
+                "priority": "CRITICAL" if risk_score > 0.04 else "HIGH",
+                "title": "Proactive Service Load Management",
+                "description": (
+                    "Current service stress levels combined with forecasted trends "
+                    f"indicate a {future_trend} risk trajectory. "
+                    "It is recommended to initiate proactive capacity planning, "
+                    "including temporary staffing augmentation, extended operating hours, "
+                    "and advance preparation of biometric infrastructure."
+                )
             })
+
         elif risk_score > 0.025:
             recommendations.insert(0, {
                 "priority": "HIGH",
-                "title": "Service Load Balancing",
-                "description": "Implement load balancing measures by distributing enrollments across multiple service centers, extending operational hours, and optimizing the enrollment process workflow to handle current demand more efficiently."
+                "title": "Preventive Operational Optimization",
+                "description": (
+                    "Service stress levels are manageable at present; however, "
+                    "forecast analysis suggests continued monitoring is essential. "
+                    "Optimize workflows and prepare contingency plans for potential demand escalation."
+                )
             })
         
         # Default recommendation if no specific issues
@@ -337,6 +418,61 @@ def get_model_stats():
         "stability": 100.0
     }
 
+@app.get("/risk-forecast/{state}/{district}")
+def risk_forecast(state: str, district: str, steps: int = 6):
+
+    df_d = df[
+        (df["state"] == state) &
+        (df["district"] == district)
+    ].sort_values("date")
+
+    if df_d.empty:
+        return {
+            "forecast": [],
+            "message": "No data available"
+        }
+
+    series = (
+        df_d["service_stress_risk"]
+        .dropna()
+        .values
+    )
+
+    # ---- Fallback for limited data ----
+    if len(series) < 6:
+        last_value = float(series[-1])
+        forecast = [last_value] * steps
+
+        return {
+            "future_periods": steps,
+            "forecast": forecast,
+            "trend": "stable",
+            "confidence": "LOW",
+            "note": "Fallback forecast due to limited historical data"
+        }
+
+    # ---- Lightweight ARIMA ----
+    model = ARIMA(series, order=(1, 0, 0))
+    model_fit = model.fit()
+
+    forecast = model_fit.forecast(steps=steps).tolist()
+
+    # ---- Trend detection ----
+    first, last = forecast[0], forecast[-1]
+    if last > first * 1.05:
+        trend = "increasing"
+    elif last < first * 0.95:
+        trend = "decreasing"
+    else:
+        trend = "stable"
+
+    return {
+        "future_periods": steps,
+        "forecast": forecast,
+        "trend": trend,
+        "confidence": "MEDIUM"
+    }
+
 @app.get("/download-ranked-data")
 def download_ranked_data():
     try:
@@ -377,17 +513,5 @@ def download_ranked_data():
     except Exception as e:
         print("CSV GENERATION ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))
-
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
-
-# Serve static assets from root
-app.mount("/static", StaticFiles(directory="."), name="static")
-
-@app.get("/")
-def serve_frontend():
-    return FileResponse("index.html")
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+    
+    

@@ -31,7 +31,7 @@
       content: "";
       position: fixed;
       inset: 0;
-      background-image: url("/static/bg.jpg"); /* your image path */
+      background-image: url("bg.jpg"); /* your image path */
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -39,7 +39,6 @@
       transform: scale(1.05); /* prevents blur edges */
       opacity: 0.25;          /* soft, professional */
       z-index: -1;
-      pointer-events: none;
     }
 
     body {
@@ -99,10 +98,12 @@
 
 <div class="min-h-screen relative z-10">
   
+    <!-- Header with Indian Flag Accent -->
 <header class="bg-white border-b-4 gradient-flag card-elevated">
   <div class="max-w-7xl mx-auto px-6 py-6">
     <div class="flex items-center justify-between gap-6">
       
+      <!-- Left -->
     <div class="max-w-xl">
       <div class="flex items-baseline gap-3">
         <h1 class="text-4xl font-display font-bold tracking-tight text-slate-900">
@@ -117,13 +118,16 @@
     Government of India – Unique Identity Authority of India
     </p>
 
+    <!-- Centered description line -->
     <p class="mt-5 text-sm font-medium text-slate-700 text-center">
       Interactive dashboard to monitor Aadhaar service stress across districts
     </p>
   </div>
 
+
+      <!-- Right Logo -->
       <img
-        src="/static/logo.svg"
+        src="logo.svg"
         alt="Aadhaar Logo"
         class="max-h-[96px] md:max-h-[110px] w-auto object-contain"
       />
@@ -231,6 +235,62 @@
             <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Risk Trend</h2>
             <canvas id="trendChart"></canvas>
           </div>
+
+          <!-- 🔮 Forecast Details -->
+          <div class="bg-white rounded-xl card-elevated p-8 mt-8">
+            <h2 class="text-xl font-bold mb-2 accent-line pl-4"
+                style="color: var(--color-neutral-dark);">
+              Forecast Details
+            </h2>
+          
+            <p class="text-xs text-gray-600 mb-6 pl-4">
+              Each period represents the <strong>next reporting interval</strong>
+              inferred from historical Aadhaar service data frequency.
+            </p>
+          
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+              <!-- Forecast Table -->
+              <div>
+                <h3 class="text-sm font-semibold mb-3 text-gray-700">
+                  Predicted Service Stress
+                </h3>
+              
+                <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Future Period</th>
+                      <th class="px-4 py-2 text-left">Risk Score</th>
+                    </tr>
+                  </thead>
+                  <tbody id="forecastTable">
+                    <tr>
+                      <td colspan="2" class="px-4 py-6 text-center text-gray-400">
+                        Load dashboard to view forecast
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            
+              <!-- Forecast Insight -->
+              <div class="flex items-center">
+                <div class="w-full bg-gray-50 border-l-4 p-5 rounded-lg"
+                     style="border-color: var(--color-green);">
+                  <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                    Forecast Insight
+                  </p>
+                  <p id="forecastInsight"
+                     class="text-sm text-gray-700 leading-relaxed">
+                  </p>
+                </div>
+              </div>
+            
+            </div>
+          </div>
+
+          
+
 
           <!-- Top Districts Chart -->
           <div class="bg-white rounded-xl card-elevated p-8">
@@ -382,7 +442,7 @@
   </div>
 
 <script>
-const API_URL = "https://aadhaar-service-dashboard.onrender.com";
+const API_URL = "http://localhost:8000";
 let currentState = "", currentDistrict = "", currentDate = "";
 let trendChart = null, topChart = null;
 
@@ -494,11 +554,20 @@ async function fetchAllData() {
     updateTopDistricts(topDistricts);
     updateHotspots(hotspots);
     updateExplanation(explanation);
+
+    await loadRiskForecast();
+
   } catch (err) {
     console.error("Error fetching data:", err);
     alert("Error loading dashboard: " + err.message);
   }
+
+  
+
+
 }
+
+
 
 function updateMetrics(data) {
   const fmt = (v) => v === null ? "N/A" : v.toFixed(4);
@@ -555,6 +624,85 @@ function updateTrend(data) {
     }
   });
 }
+
+async function loadRiskForecast() {
+  const table = document.getElementById("forecastTable");
+  const insight = document.getElementById("forecastInsight");
+
+  table.innerHTML = "";
+  insight.innerHTML = "";
+
+  if (!currentState || !currentDistrict) return;
+
+  try {
+    const res = await fetch(
+      `${API_URL}/risk-forecast/${encodeURIComponent(currentState)}/${encodeURIComponent(currentDistrict)}?steps=6`
+    );
+    const data = await res.json();
+
+    if (!data.forecast || data.forecast.length === 0) {
+      table.innerHTML = `
+        <tr>
+          <td colspan="2" class="px-4 py-6 text-center text-gray-400">
+            Insufficient historical data
+          </td>
+        </tr>`;
+      insight.innerHTML = `
+        Forecast could not be generated due to limited historical data.<br>
+        <strong>Confidence:</strong> LOW
+      `;
+      return;
+    }
+
+    /* ---- Fill Forecast Table ---- */
+    data.forecast.forEach((val, i) => {
+      table.innerHTML += `
+        <tr class="border-t">
+          <td class="px-4 py-2">+${i + 1}</td>
+          <td class="px-4 py-2 font-semibold">${val.toFixed(4)}</td>
+        </tr>
+      `;
+    });
+
+    /* ---- Forecast Insight Text ---- */
+    insight.innerHTML = `
+      The model predicts a <strong>${data.trend}</strong> trend in service stress
+      over the next ${data.future_periods} reporting periods.
+      <br><br>
+      <strong>Forecast Confidence:</strong> ${data.confidence}
+    `;
+
+    /* ---- Add forecast to chart (already correct in your code) ---- */
+    if (trendChart) {
+      const existingLength = trendChart.data.labels.length;
+      const futureLabels = data.forecast.map((_, i) => `+${i + 1}`);
+
+      trendChart.data.labels.push(...futureLabels);
+
+      trendChart.data.datasets.push({
+        label: "Predicted Risk",
+        data: [
+          ...Array(existingLength).fill(null),
+          ...data.forecast
+        ],
+        borderColor: "#dc2626",
+        borderDash: [6, 6],
+        tension: 0.4,
+        fill: false
+      });
+
+      trendChart.update();
+        console.log("Raw forecast values:", data.forecast);
+    }
+
+  } catch (err) {
+    console.error("Forecast load failed:", err);
+  }
+
+
+
+}
+
 
 function updateTopDistricts(data) {
   if (!data || data.length === 0) return;
