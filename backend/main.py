@@ -9,6 +9,7 @@ import google.generativeai as genai
 from fastapi.responses import StreamingResponse
 import csv
 import io
+import numpy as np
 from statsmodels.tsa.arima.model import ARIMA
 
 
@@ -466,11 +467,20 @@ def risk_forecast(state: str, district: str, steps: int = 6):
     else:
         trend = "stable"
 
+    if len(series) < 12:
+        confidence = "LOW"
+
+    elif len(series) >= 25 and np.std(series) < 0.01:
+        confidence = "HIGH"
+
+    else:
+        confidence = "MEDIUM"
+
     return {
         "future_periods": steps,
         "forecast": forecast,
         "trend": trend,
-        "confidence": "MEDIUM"
+        "confidence": confidence
     }
 
 @app.get("/download-ranked-data")
