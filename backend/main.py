@@ -21,6 +21,9 @@ from reportlab.platypus import Image
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 
 
 
@@ -822,4 +825,11 @@ def download_ranked_data():
         print("CSV GENERATION ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))
     
-    
+app.mount("/static", StaticFiles(directory="static"), name="static")
+@app.get("/")
+def serve_frontend():
+    return FileResponse("static/index.html")
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
