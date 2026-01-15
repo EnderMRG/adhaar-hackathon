@@ -21,10 +21,10 @@ from reportlab.platypus import Image
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
 from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 
 
@@ -826,12 +826,12 @@ def download_ranked_data():
         print("CSV GENERATION ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))
     
-BASE_DIR = Path(__file__).resolve().parent  # backend folder
+BASE_DIR = Path(__file__).resolve().parent          # backend/
+FRONTEND_DIR = BASE_DIR.parent / "frontend"         # frontend/
 
-# Serve everything inside backend/ as static
-app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 @app.get("/")
 def serve_frontend():
-    return FileResponse(BASE_DIR / "index.html")
+    return FileResponse(FRONTEND_DIR / "index.html")
 
