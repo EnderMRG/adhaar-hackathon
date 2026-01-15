@@ -92,6 +92,118 @@
       border-radius: 4px;
       font-family: monospace;
     }
+
+    .dq-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .data-quality-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .dashboard-row {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+    }
+
+    .data-quality-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .data-quality-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0;
+    }
+
+    /* Metrics layout */
+    .dq-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dq-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Labels & values */
+    .dq-label {
+      font-size: 13px;
+      color: #6b7280; /* muted gray */
+    }
+
+    .dq-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .dq-value.small {
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    /* Badge */
+    .dq-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+
+    .dq-badge.GOOD {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .dq-badge.MODERATE {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .dq-badge.POOR {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+
+    .dq-badge.GOOD {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .dq-badge.MODERATE {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .dq-badge.POOR {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .dq-row {
+      font-size: 14px;
+      margin: 4px 0;
+    }
+
   </style>
 </head>
 <body class="bg-neutral-light text-neutral-900" style="background-color: var(--color-neutral-light);">
@@ -101,10 +213,10 @@
     <!-- Header with Indian Flag Accent -->
 <header class="bg-white border-b-4 gradient-flag card-elevated">
   <div class="max-w-7xl mx-auto px-6 py-6">
-    <div class="flex items-center justify-between gap-6">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
       
       <!-- Left -->
-    <div class="max-w-xl">
+    <div class="max-w-xl text-center md:text-left">
       <div class="flex items-baseline gap-3">
         <h1 class="text-4xl font-display font-bold tracking-tight text-slate-900">
           Aadhaar
@@ -137,7 +249,7 @@
     <div class="max-w-7xl mx-auto px-6 py-8">
 
       <!-- Controls Section -->
-      <div class="bg-white rounded-xl card-elevated p-8 mb-8 sticky top-6 z-40">
+      <div class="bg-white rounded-xl card-elevated p-6 md:p-8 mb-8 md:sticky md:top-6 z-40">
         <h2 class="text-xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Dashboard Filters</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <div>
@@ -172,9 +284,9 @@
         <!-- Risk Verdict Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <!-- Verdict Card -->
-          <div id="verdictCard" class="rounded-xl card-elevated overflow-hidden border-l-4" style="border-left-color: var(--color-green);">
-            <div class="bg-white p-8">
-              <h2 class="text-2xl font-bold mb-6" style="color: var(--color-neutral-dark);">Risk Assessment</h2>
+          <div id="verdictCard"class="bg-white rounded-xl card-elevated overflow-hidden border-l-4"style="border-left-color: var(--color-green);">
+            <div class=" p-8">
+              <h2 class="text-xl md:text-2xl font-bold mb-6" style="color: var(--color-neutral-dark);">Risk Assessment</h2>
               <div class="flex items-center gap-4 mb-6">
                 <div id="verdictBadge" class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
                   <span id="verdictText" class="text-2xl font-bold" style="color: var(--color-green);">-</span>
@@ -189,9 +301,9 @@
           </div>
 
           <!-- Percentile Card -->
-          <div id="percentileCard" class="rounded-xl card-elevated overflow-hidden border-l-4" style="border-left-color: var(--color-blue);">
-            <div class="bg-white p-8">
-              <h2 class="text-2xl font-bold mb-6" style="color: var(--color-neutral-dark);">Comparative Analysis</h2>
+          <div id="percentileCard"class="bg-white rounded-xl card-elevated overflow-hidden border-l-4"style="border-left-color: var(--color-blue);">
+            <div class="p-8">
+              <h2 class="text-xl md:text-2xl font-bold mb-6" style="color: var(--color-neutral-dark);">Comparative Analysis</h2>
               <div class="text-center">
                 <p class="text-sm text-gray-600 mb-2">Risk Percentile Ranking</p>
                 <p id="percentileText" class="text-5xl font-bold" style="color: var(--color-blue);">-</p>
@@ -202,7 +314,7 @@
         </div>
 
         <!-- Key Metrics Grid -->
-        <div class="bg-white rounded-xl card-elevated p-8">
+        <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
           <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Performance Metrics</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="p-6 rounded-lg" style="background-color: rgba(249, 115, 22, 0.05); border-left: 3px solid var(--color-saffron);">
@@ -231,33 +343,42 @@
         <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <!-- Trend Chart -->
-          <div class="bg-white rounded-xl card-elevated p-8">
+          <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
             <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Risk Trend</h2>
             <canvas id="trendChart"></canvas>
           </div>
 
-          <!-- 🔮 Forecast Details -->
-          <div class="bg-white rounded-xl card-elevated p-8 mt-8">
-            <h2 class="text-xl font-bold mb-2 accent-line pl-4"
-                style="color: var(--color-neutral-dark);">
-              Forecast Details
-            </h2>
+          <!-- Top Districts Chart -->
+          <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
+              <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Top 10 High-Risk Districts (OVERALL)</h2>
+              <canvas id="topChart"></canvas>
+            </div>
+          </div>
+
+
+          <!-- Forecast + Data Quality (REBUILT CLEANLY) -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-            <p class="text-xs text-gray-600 mb-6 pl-4">
-              Each period represents the <strong>next reporting interval</strong>
-              inferred from historical Aadhaar service data frequency.
-            </p>
-          
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Forecast Details (LEFT – 2/3) -->
+            <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
+              <h2 class="text-xl font-bold mb-2 accent-line pl-4"
+                  style="color: var(--color-neutral-dark);">
+                Forecast Details
+              </h2>
             
-              <!-- Forecast Table -->
-              <div>
-                <h3 class="text-sm font-semibold mb-3 text-gray-700">
-                  Predicted Service Stress
-                </h3>
-              
-                <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
-                  <thead class="bg-gray-100">
+              <p class="text-xs text-gray-600 mb-3 pl-4">
+                Each period represents the <strong>next reporting interval</strong>
+                inferred from historical Aadhaar service data frequency.
+              </p>
+            
+              <h3 class="text-sm font-semibold mb-2 text-gray-700">
+                Predicted Service Stress
+              </h3>
+            
+              <!-- Table fills remaining height -->
+              <div class="overflow-x-auto">
+                <table class="min-w-[420px] w-full text-sm border border-gray-200 rounded-lg">
+                  <thead class="bg-gray-100 sticky top-0">
                     <tr>
                       <th class="px-4 py-2 text-left">Future Period</th>
                       <th class="px-4 py-2 text-left">Risk Score</th>
@@ -265,42 +386,169 @@
                   </thead>
                   <tbody id="forecastTable">
                     <tr>
-                      <td colspan="2" class="px-4 py-6 text-center text-gray-400">
+                      <td colspan="2" class="px-4 py-3 text-center text-gray-400">
                         Load dashboard to view forecast
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
+            </div>
+          
+            <!-- Data Quality -->
+            <div class="bg-white rounded-xl card-elevated p-8 flex flex-col h-full overflow-hidden">
             
-              <!-- Forecast Insight -->
-              <div class="flex items-center">
-                <div class="w-full bg-gray-50 border-l-4 p-5 rounded-lg"
-                     style="border-color: var(--color-green);">
-                  <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">
-                    Forecast Insight
-                  </p>
-                  <p id="forecastInsight"
-                     class="text-sm text-gray-700 leading-relaxed">
-                  </p>
+              <h2 class="text-xl font-bold mb-6 accent-line pl-4"
+                  style="color: var(--color-neutral-dark);">
+                Data Quality
+              </h2>
+            
+              <!-- Status -->
+              <div class="flex items-center gap-4 mb-6">
+                <div id="dqCircle"
+                     class="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold">
+                  –
+                </div>
+              
+                <div>
+                  <p class="text-sm text-gray-600 mb-1">Current Status</p>
+                  <p id="dqTextLabel" class="text-lg font-semibold text-gray-900">–</p>
+                </div>
+              </div>
+            
+              <!-- Metrics -->
+              <div class="flex flex-col gap-3 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Records available</span>
+                  <span class="font-semibold" id="dqRecords">—</span>
+                </div>
+              
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Coverage</span>
+                  <span class="font-semibold" id="dqCoverage">—</span>
+                </div>
+              
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Missing periods</span>
+                  <span class="font-semibold" id="dqMissing">—</span>
+                </div>
+              
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Date range</span>
+                  <span class="text-xs font-medium" id="dqRange">—</span>
+                </div>
+              
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Last updated</span>
+                  <span class="text-xs font-medium" id="dqUpdated">—</span>
+                </div>
+              </div>
+            
+            </div>
+
+          
+          </div>
+
+
+          <!-- Forecast Insight -->
+          <div class="bg-white rounded-xl card-elevated p-6 border-l-4" style="border-color: var(--color-green);">
+            <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+              Forecast Insight
+            </p>
+            <p id="forecastInsight"
+               class="text-sm text-gray-700 leading-relaxed">
+              Load dashboard to view forecast insight
+            </p>
+          </div>
+
+
+          <!-- District Comparison Card -->
+          <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
+            <h2 class="text-2xl font-bold mb-6 accent-line pl-4"
+                style="color: var(--color-neutral-dark);">
+              District Comparison
+            </h2>
+          
+            <!-- Select District -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold mb-2 text-gray-700">
+                Compare with district
+              </label>
+              <select id="compareDistrict"
+                      class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-orange-500 focus:outline-none">
+                <option value="">Select district to compare</option>
+              </select>
+            </div>
+          
+            <!-- Comparison Panels -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+              <!-- District A -->
+              <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">
+                  Selected District (A)
+                </h3>
+              
+                <div class="space-y-2 text-sm text-gray-700">
+                  <div class="flex justify-between">
+                    <span>Risk Score</span>
+                    <strong id="cmpRiskA">—</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Trend</span>
+                    <strong id="cmpTrendA">—</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Forecast</span>
+                    <strong id="cmpForecastA">—</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Confidence</span>
+                    <strong id="cmpConfA">—</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Data Quality</span>
+                    <strong id="cmpQualityA">—</strong>
+                  </div>
+                </div>
+              </div>
+            
+              <!-- District B -->
+              <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">
+                  Comparison District (B)
+                </h3>
+              
+                <div class="space-y-2 text-sm text-gray-700">
+                  <div class="flex justify-between">
+                    <span>Risk Score</span>
+                    <strong id="cmpRiskB">—</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Trend</span>
+                    <strong id="cmpTrendB">—</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Forecast</span>
+                    <strong id="cmpForecastB">—</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Confidence</span>
+                    <strong id="cmpConfB">—</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Data Quality</span>
+                    <strong id="cmpQualityB">—</strong>
+                  </div>
                 </div>
               </div>
             
             </div>
           </div>
 
-          
-
-
-          <!-- Top Districts Chart -->
-          <div class="bg-white rounded-xl card-elevated p-8">
-            <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Top 10 High-Risk Districts (OVERALL)</h2>
-            <canvas id="topChart"></canvas>
-          </div>
-        </div>
 
         <!-- Hotspots Table -->
-        <div class="bg-white rounded-xl card-elevated p-8">
+        <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
           <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">High-Risk Hotspots</h2>
           <div class="overflow-x-auto">
             <table class="w-full">
@@ -321,7 +569,7 @@
         </div>
 
         <!-- Risk Explanation -->
-        <div class="bg-white rounded-xl card-elevated p-8">
+        <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
           <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Risk Analysis</h2>
           <div
               id="explanationText"
@@ -332,7 +580,7 @@
         </div>
 
         <!-- AI Policy Recommendation -->
-        <div class="bg-white rounded-xl card-elevated p-8">
+        <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
           <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Policy Recommendations</h2>
           <button onclick="generateRecommendation()" class="px-6 py-3 rounded-lg font-semibold text-white transition transform hover:scale-105 active:scale-95 mb-6" style="background-color: var(--color-green);">
             Generate AI Recommendation
@@ -421,13 +669,48 @@
         </div>
 
         <!-- Download Section -->
-        <div class="bg-white rounded-xl card-elevated p-8">
-          <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Data Export</h2>
-          <p class="text-gray-700 mb-6">Download ranked district stress data for further analysis and reporting.</p>
-          <button onclick="downloadRankedData()" class="px-8 py-3 rounded-lg font-semibold text-white transition transform hover:scale-105 active:scale-95" style="background-color: var(--color-saffron);">
-            Download as CSV
-          </button>
+        <!-- Export Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+          <!-- Data Export Card -->
+          <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
+            <h2 class="text-2xl font-bold mb-6 accent-line pl-4"
+                style="color: var(--color-neutral-dark);">
+              Data Export
+            </h2>
+          
+            <p class="text-gray-700 mb-6">
+              Download ranked district stress data for further analysis and reporting.
+            </p>
+          
+            <button onclick="downloadRankedData()"
+                    class="px-8 py-3 md:py-2 rounded-lg font-semibold text-white transition transform hover:scale-105 active:scale-95"
+                    style="background-color: var(--color-saffron);">
+              Download as CSV
+            </button>
+          </div>
+        
+          <!-- Policy Brief Export Card -->
+          <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
+            <h2 class="text-2xl font-bold mb-6 accent-line pl-4"
+                style="color: var(--color-neutral-dark);">
+              Policy Brief
+            </h2>
+          
+            <p class="text-gray-700 mb-6">
+              Generate a decision-ready policy brief summarizing risk, forecast,
+              confidence, data quality, and recommendations.
+            </p>
+          
+            <button id="downloadBrief"
+                    class="px-8 py-3 md:py-2 rounded-lg font-semibold text-white transition transform hover:scale-105 active:scale-95"
+                    style="background-color: var(--color-saffron);">
+              Download Policy Brief
+            </button>
+          </div>
+        
         </div>
+
 
       </div>
     </div>
@@ -445,6 +728,12 @@
 const API_URL = "http://localhost:8000";
 let currentState = "", currentDistrict = "", currentDate = "";
 let trendChart = null, topChart = null;
+let currentCompareDistrict = null;
+
+document.getElementById("compareDistrict").addEventListener("change", (e) => {
+  currentCompareDistrict = e.target.value || null;
+});
+
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadStates();
@@ -475,6 +764,12 @@ async function loadDistricts() {
     const res = await fetch(`${API_URL}/districts/${state}`);
     const districts = await res.json();
     const districtSelect = document.getElementById("district");
+    const compareSelect = document.getElementById("compareDistrict");
+    if (compareSelect) {
+      compareSelect.innerHTML =
+        '<option value="">Select district to compare</option>' +
+        districts.map(d => `<option value="${d}">${d}</option>`).join("");
+    }
     districtSelect.innerHTML = '<option value="">Select a district</option>' +
       districts.map(d => `<option value="${d}">${d}</option>`).join("");
     document.getElementById("date").innerHTML = '';
@@ -554,8 +849,32 @@ async function fetchAllData() {
     updateTopDistricts(topDistricts);
     updateHotspots(hotspots);
     updateExplanation(explanation);
-
+    resetComparisonCard();
     await loadRiskForecast();
+    await loadDataQuality();
+
+    // ---- Fill District A comparison values ----
+    document.getElementById("cmpRiskA").innerText =document.getElementById("metric-risk").innerText;
+    document.getElementById("cmpTrendA").innerText =
+      document.getElementById("forecastInsight").innerText.includes("increasing")
+        ? "Increasing"
+        : document.getElementById("forecastInsight").innerText.includes("decreasing")
+        ? "Decreasing"
+        : "Stable";
+
+    document.getElementById("cmpForecastA").innerText = document.querySelector("#forecastTable tr:last-child td:last-child")?.innerText || "—";
+
+    document.getElementById("cmpConfA").innerText = document.getElementById("forecastInsight").innerText.match(/Confidence:\s*(\w+)/)?.[1] || "—";
+    
+    // ---- Comparison: Data Quality for District A ----
+    const dqResA = await fetch(
+      `${API_URL}/data-quality/${encodeURIComponent(currentState)}/${encodeURIComponent(currentDistrict)}`
+    );
+    const dqA = await dqResA.json();
+
+    document.getElementById("cmpQualityA").innerText = dqA.records > 0 ? dqA.quality : "—";
+
+
 
   } catch (err) {
     console.error("Error fetching data:", err);
@@ -624,6 +943,62 @@ function updateTrend(data) {
     }
   });
 }
+
+async function loadDataQuality() {
+  if (!currentState || !currentDistrict) return;
+
+  try {
+    const res = await fetch(
+      `${API_URL}/data-quality/${encodeURIComponent(currentState)}/${encodeURIComponent(currentDistrict)}`
+    );
+
+    const data = await res.json();
+
+    document.getElementById("dqRecords").innerText = data.records;
+    document.getElementById("dqCoverage").innerText = data.coverage + "%";
+    document.getElementById("dqMissing").innerText =
+      data.missing_periods === null ? "N/A" : data.missing_periods;
+    document.getElementById("dqRange").innerText = data.date_range || "N/A";
+    document.getElementById("dqUpdated").innerText = data.last_updated || "N/A";
+
+    const circle = document.getElementById("dqCircle");
+    const label = document.getElementById("dqTextLabel");
+
+    const styles = {
+      GOOD: {
+        bg: "bg-green-100",
+        text: "#15803d",
+        label: "Good Quality",
+        letter: "G"
+      },
+      MODERATE: {
+        bg: "bg-yellow-100",
+        text: "#b45309",
+        label: "Moderate Quality",
+        letter: "M"
+      },
+      POOR: {
+        bg: "bg-red-100",
+        text: "#b91c1c",
+        label: "Poor Quality",
+        letter: "P"
+      }
+    };
+
+    const s = styles[data.quality] || styles.MODERATE;
+
+    circle.className =
+      `w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold ${s.bg}`;
+    circle.style.color = s.text;
+    circle.innerText = s.letter;
+
+    label.innerText = s.label;
+
+  } catch (err) {
+    console.error("Failed to load data quality:", err);
+  }
+}
+
 
 async function loadRiskForecast() {
   const table = document.getElementById("forecastTable");
@@ -800,6 +1175,79 @@ async function downloadRankedData() {
     console.error(err);
   }
 }
+
+document.getElementById("compareDistrict").addEventListener("change", async function () {
+  const districtB = this.value;
+  if (!districtB || !currentState || !currentDate) return;
+
+  // Risk
+  const risk = await fetch(
+    `${API_URL}/risk?state=${encodeURIComponent(currentState)}&district=${encodeURIComponent(districtB)}&date=${currentDate}`
+  ).then(r => r.json());
+
+  // Forecast
+  const forecast = await fetch(
+    `${API_URL}/risk-forecast/${encodeURIComponent(currentState)}/${encodeURIComponent(districtB)}`
+  ).then(r => r.json());
+
+  // ---- Data Quality for District B ----
+  const dqResB = await fetch(
+    `${API_URL}/data-quality/${encodeURIComponent(currentState)}/${encodeURIComponent(districtB)}`
+  );
+  const dqB = await dqResB.json();
+
+  document.getElementById("cmpQualityB").innerText =    dqB.records > 0 ? dqB.quality : "—";
+  document.getElementById("cmpRiskB").innerText = risk.risk_score?.toFixed(4) || "—";
+  document.getElementById("cmpTrendB").innerText = forecast.trend || "—";
+  document.getElementById("cmpForecastB").innerText =
+    forecast.forecast?.slice(-1)[0]?.toFixed(4) || "—";
+  document.getElementById("cmpConfB").innerText = forecast.confidence || "—";
+});
+
+function resetComparisonCard() {
+  const fields = [
+    "cmpRiskA", "cmpTrendA", "cmpForecastA", "cmpConfA", "cmpQualityA",
+    "cmpRiskB", "cmpTrendB", "cmpForecastB", "cmpConfB", "cmpQualityB"
+  ];
+
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = "—";
+  });
+
+  const compareSelect = document.getElementById("compareDistrict");
+  if (compareSelect) compareSelect.value = "";
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const downloadBtn = document.getElementById("downloadBrief");
+
+  if (!downloadBtn) return;
+
+  downloadBtn.addEventListener("click", () => {
+    if (!currentState || !currentDistrict || !currentDate) {
+      alert("Please load the dashboard first.");
+      return;
+    }
+
+    let url =
+      `${API_URL}/policy-brief/` +
+      `${encodeURIComponent(currentState)}/` +
+      `${encodeURIComponent(currentDistrict)}/` +
+      `${currentDate}`;
+
+    // 🔹 Include comparison district if selected
+    if (currentCompareDistrict) {
+      url += `?compare_district=${encodeURIComponent(currentCompareDistrict)}`;
+    }
+
+    window.open(url, "_blank");
+  });
+});
+
+
+
 </script>
 
 </body>

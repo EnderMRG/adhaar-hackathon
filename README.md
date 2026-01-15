@@ -1,171 +1,173 @@
+Perfect. Based on **your updated frontend, layout fixes, mobile responsiveness, and UI restructuring**, here is a **clean, updated README** that accurately reflects the **current state of the project**.
 
+You can **replace your existing README.md entirely** with the following.
+
+---
 
 # Aadhaar Service Stress Dashboard
 
-A full-stack **data-driven governance dashboard** to analyze, visualize, and explain **Aadhaar service stress risks** across Indian districts using **machine learning, analytics, and AI-generated policy insights**.
+**Responsive Risk Analysis & Forecasting Platform**
+
+## Overview
+
+The **Aadhaar Service Stress Dashboard** is a full-stack data analytics and visualization platform designed to **monitor, forecast, and explain Aadhaar service stress across districts in India**.
+
+It combines:
+
+* A **machine learning–based risk model**
+* A **FastAPI backend**
+* A **modern, responsive HTML + Tailwind CSS dashboard**
+* **AI-generated explanations and policy recommendations**
+
+The dashboard is optimized for **desktop and mobile screens**, following a **government-grade, decision-support design**.
 
 ---
 
-## 📌 Project Overview
+## Key Capabilities
 
-The **Aadhaar Service Stress Dashboard** helps administrators and policymakers:
+### 🔍 Risk Assessment
 
-* Monitor **service stress levels** at district level
-* Identify **high-risk regions**
-* Understand **why** a district is risky (explainability)
-* Receive **AI-generated policy recommendations**
-* Export ranked risk data for reporting and planning
+* Computes a **continuous service stress risk score**
+* Converts scores into **qualitative risk levels** (Low / Medium / High)
+* Displays a clear **Risk Assessment card** for quick interpretation
 
-The system combines:
+### 📊 Comparative Analysis
 
-* Statistical risk modeling
-* Time-series analysis
-* Interactive visualization
-* AI-assisted decision support
+* Shows **risk percentile ranking** among all districts nationwide
+* Enables contextual comparison for policymakers
+
+### 📈 Trend & Forecasting
+
+* Visualizes **historical risk trends**
+* Generates **future risk forecasts** for upcoming reporting periods
+* Adds forecast overlays directly onto trend charts
+
+### 📋 Data Quality Monitoring
+
+* Evaluates data reliability using:
+
+  * Records available
+  * Coverage %
+  * Missing periods
+  * Date range
+* Displays a **clear quality status (Good / Moderate / Poor)** using a visual indicator
+
+### 🧠 AI-Powered Insights
+
+* Natural-language **risk explanations**
+* **Policy recommendations** generated using Google Gemini API
+* Human-readable summaries for decision-makers
+
+### 📱 Mobile-Responsive Design
+
+* Fully responsive layout using **Tailwind CSS**
+* Optimized for:
+
+  * Phones
+  * Tablets
+  * Desktops
+* No horizontal scrolling or layout breaks on small screens
 
 ---
 
-## 🏗️ Architecture
+## Technology Stack
+
+### Frontend
+
+* HTML5
+* Tailwind CSS (CDN)
+* Vanilla JavaScript
+* Chart.js (data visualization)
+* Marked.js (markdown rendering)
+
+### Backend
+
+* FastAPI
+* Python
+* Scikit-learn (ML model)
+* Pandas / NumPy
+
+### AI
+
+* Google Gemini API (policy recommendations & explanations)
+
+---
+
+## Project Structure
 
 ```
-┌────────────┐        HTTP/JSON        ┌──────────────┐
-│  Frontend  │  ───────────────────▶  │   FastAPI    │
-│ (HTML/JS)  │                        │   Backend    │
-│            │  ◀───────────────────  │              │
-└────────────┘        CSV / JSON       └──────┬───────┘
-                                              │
-                                   ┌──────────┴──────────┐
-                                   │  ML Model + Dataset  │
-                                   │  (Pandas + sklearn) │
-                                   └─────────────────────┘
+.
+├── app.py                      # Streamlit-based analytical dashboard (optional)
+├── backend
+│   ├── main.py                 # FastAPI backend
+│   ├── requirements.txt        # Backend dependencies
+│   ├── aadhaar_merged_dataset.csv
+│   └── aadhaar_service_stress_model.pkl
+├── frontend
+│   └── index.html              # Responsive Tailwind-based dashboard
+└── README.md
 ```
 
 ---
 
-## 🧠 Core Components
+## Setup & Installation
 
-### 1️⃣ Frontend (Dashboard UI)
-
-* **Technology:** HTML, TailwindCSS, Vanilla JavaScript
-* **Features:**
-
-  * State / District / Date filters
-  * KPI cards (Risk score, biometric ratio, pressures)
-  * Trend charts (Chart.js)
-  * Top-risk and hotspot analysis
-  * Markdown-rendered AI explanations
-  * CSV export
-
-📄 File: `index.html`
-
----
-
-### 2️⃣ Backend API
-
-* **Technology:** FastAPI
-* **Responsibilities:**
-
-  * Serve filtered Aadhaar stress data
-  * Compute rankings & percentiles
-  * Provide risk verdicts (LOW / MEDIUM / HIGH)
-  * Generate AI-assisted explanations & policy recommendations
-  * Stream ranked CSV downloads
-
-📄 File: `main.py`
-
----
-
-### 3️⃣ Machine Learning Model
-
-* **Model Type:** Regression-based service stress estimator
-* **Input:** Operational Aadhaar indicators
-* **Output:** Continuous `service_stress_risk` score
-* **Evaluation:** MAE, RMSE, Spearman rank correlation
-
-📦 File: `aadhaar_service_stress_model.pkl`
-
----
-
-### 4️⃣ Dataset
-
-* **Source:** Aggregated Aadhaar enrollment & update metrics
-* **Granularity:** District × Date
-* **Key Columns:**
-
-  * `service_stress_risk`
-  * `biometric_to_enrolment_ratio`
-  * `child_update_pressure`
-  * `elderly_update_pressure`
-
-📊 File: `aadhaar_merged_dataset.csv`
-
----
-
-## ✨ Key Features
-
-* 📊 **District-level stress scoring**
-* 📈 **Risk trend over time**
-* 🏆 **Top-risk district ranking**
-* 🔍 **Explainable risk analysis**
-* 🤖 **AI-generated policy recommendations**
-* 📥 **CSV export (Streamlit-equivalent logic)**
-* 🧼 **State-safe UI (clears old AI outputs on reload)**
-
----
-
-## 🤖 AI Capabilities
-
-The system generates:
-
-* **Risk explanations** (why a district is risky)
-* **Actionable policy recommendations**, including:
-
-  * Infrastructure expansion
-  * Staffing optimization
-  * Child-friendly and elderly-focused services
-  * Emergency service load balancing
-
-AI outputs are rendered using **Markdown → HTML** for clarity and professionalism.
-
----
-
-## 📦 Installation & Setup
-
-### 1️⃣ Clone Repository
+### 1️⃣ Clone the Repository
 
 ```bash
-git clone <repo-url>
+git clone <repository-url>
 cd aadhaar-service-dashboard
 ```
 
-### 2️⃣ Create Virtual Environment (Recommended)
+---
+
+### 2️⃣ Backend Setup
+
+Create and activate a virtual environment:
 
 ```bash
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
 ```
 
-### 3️⃣ Install Dependencies
+**Activate:**
+
+* Windows:
+
+  ```bash
+  venv\Scripts\activate
+  ```
+* macOS / Linux:
+
+  ```bash
+  source venv/bin/activate
+  ```
+
+Install dependencies:
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 4️⃣ Environment Variables
-
-Create a `.env` file:
-
-```env
-GEMINI_API_KEY=your_google_generative_ai_key
+pip install -r backend/requirements.txt
 ```
 
 ---
 
-## ▶️ Running the Project
+### 3️⃣ Environment Variables
 
-### Start Backend
+Create a `.env` file inside the `backend` directory:
+
+```
+GOOGLE_API_KEY=YOUR_GEMINI_API_KEY
+```
+
+---
+
+## Running the Application
+
+### Option 1: FastAPI Backend + Responsive Frontend (Recommended)
+
+#### Start Backend
 
 ```bash
+cd backend
 uvicorn main:app --reload
 ```
 
@@ -175,56 +177,58 @@ Backend runs at:
 http://localhost:8000
 ```
 
-### Open Frontend
+#### Launch Frontend
 
-Open `index.html` directly in your browser
-(or serve it using a local server).
+Open:
 
----
+```
+frontend/index.html
+```
 
-## 📡 API Endpoints (Core)
+in any modern browser.
 
-| Endpoint                                           | Description            |
-| -------------------------------------------------- | ---------------------- |
-| `/states`                                          | List all states        |
-| `/districts/{state}`                               | Districts for a state  |
-| `/dates/{state}/{district}`                        | Available dates        |
-| `/risk`                                            | Risk metrics           |
-| `/risk-verdict/{score}`                            | LOW / MEDIUM / HIGH    |
-| `/risk-percentile/{state}/{district}/{date}`       | Comparative percentile |
-| `/risk-trend/{state}/{district}`                   | Time-series trend      |
-| `/top-districts`                                   | Top-risk districts     |
-| `/district-hotspots/{state}`                       | State hotspots         |
-| `/risk-explanation/{state}/{district}/{date}`      | AI explanation         |
-| `/policy-recommendation/{state}/{district}/{date}` | AI policy              |
-| `/download-ranked-data`                            | Ranked CSV export      |
+✔ Works on desktop and mobile
+✔ No build step required
 
 ---
 
-## 📥 CSV Export Logic
+## API Endpoints
 
-The CSV export **matches Streamlit logic exactly**:
+| Endpoint                                               | Description                |
+| ------------------------------------------------------ | -------------------------- |
+| `GET /states`                                          | List all states            |
+| `GET /districts/{state}`                               | Districts in a state       |
+| `GET /dates/{state}/{district}`                        | Available reporting dates  |
+| `GET /risk`                                            | Risk score & metrics       |
+| `GET /risk-verdict/{risk_score}`                       | LOW / MEDIUM / HIGH        |
+| `GET /risk-percentile/{state}/{district}/{date}`       | National percentile        |
+| `GET /risk-trend/{state}/{district}`                   | Historical trend           |
+| `GET /risk-forecast/{state}/{district}`                | Future forecast            |
+| `GET /data-quality/{state}/{district}`                 | Data quality metrics       |
+| `GET /top-districts`                                   | Top 10 high-risk districts |
+| `GET /district-hotspots/{state}`                       | State-level hotspots       |
+| `GET /risk-explanation/{state}/{district}/{date}`      | AI explanation             |
+| `GET /policy-recommendation/{state}/{district}/{date}` | AI recommendation          |
+| `GET /download-ranked-data`                            | CSV export                 |
 
-* Grouped by **district**
-* Mean aggregation of risk metrics
-* Sorted by **highest service stress risk**
-* Streamed as `text/csv`
+---
+
+## Design Principles
+
+* **Decision-first UI** (not analytics clutter)
+* **Clear visual hierarchy**
+* **Explainable AI outputs**
+* **Mobile-first responsiveness**
+* **Government dashboard aesthetics**
 
 ---
 
-## 🎯 Use Cases
+## Intended Use
 
-* UIDAI operational planning
-* Resource allocation decisions
-* District-level monitoring
-* Policy simulations
-* Academic / SIH / hackathon submissions
+* Policy planning & intervention
+* District-level operational monitoring
+* Risk forecasting & preparedness
+* Data quality auditing
+* Evidence-based governance
 
----
 
-## 🔒 Disclaimer
-
-This project is for **educational, analytical, and demonstration purposes**.
-Final administrative decisions must always involve **human oversight**.
-
----

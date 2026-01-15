@@ -11,7 +11,16 @@ import csv
 import io
 import numpy as np
 from statsmodels.tsa.arima.model import ARIMA
-
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch
+from fastapi.responses import FileResponse
+import tempfile
+from reportlab.platypus import Image
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 
 
@@ -482,6 +491,295 @@ def risk_forecast(state: str, district: str, steps: int = 6):
         "trend": trend,
         "confidence": confidence
     }
+
+@app.get("/data-quality/{state}/{district}")
+def get_data_quality(state: str, district: str):
+
+    data = df[
+        (df["state"] == state) &
+        (df["district"] == district)
+    ].sort_values("date")
+
+    if data.empty:
+        return {
+            "records": 0,
+            "coverage": 0.0,
+            "missing_periods": None,
+            "date_range": None,
+            "last_updated": None,
+            "quality": "POOR"
+        }
+
+    # 1. Records (usable data points)
+    records = int(data["service_stress_risk"].notna().sum())
+
+    # 2. Monthly coverage (dataset-aware)
+    data = data.copy()
+    data["month"] = data["date"].dt.to_period("M")
+
+    available_months = data["month"].nunique()
+
+    full_month_range = pd.period_range(
+        start=data["month"].min(),
+        end=data["month"].max(),
+        freq="M"
+    )
+    expected_months = len(full_month_range)
+
+    coverage = round((available_months / expected_months) * 100, 1)
+    missing_periods = expected_months - available_months
+
+    # 3. Quality label (aligned with forecasting needs)
+    if coverage >= 90 and records >= 12:
+        quality = "GOOD"
+    elif coverage >= 60:
+        quality = "MODERATE"
+    else:
+        quality = "POOR"
+
+    return {
+        "records": records,
+        "coverage": coverage,
+        "missing_periods": missing_periods,
+        "date_range": f"{data['date'].min().date()} to {data['date'].max().date()}",
+        "last_updated": str(data["date"].max().date()),
+        "quality": quality
+    }
+
+@app.get("/policy-brief/{state}/{district}/{date}")
+def generate_policy_brief_pdf(state: str, district: str, date: str, compare_district: str | None = None):
+
+    # ---- Fetch analytics ----
+    risk_row = df[
+        (df["state"] == state) &
+        (df["district"] == district) &
+        (df["date"].dt.date == pd.to_datetime(date).date())
+    ]
+
+
+    risk_score = (
+        float(risk_row["service_stress_risk"].iloc[0])
+        if not risk_row.empty
+        else None
+    )
+
+    forecast = risk_forecast(state, district)
+    dq = get_data_quality(state, district)
+    policy = get_policy_recommendation(state, district, date)
+
+    # ---- Clean policy recommendation for PDF ----
+    policy_text = policy.get("recommendation", "")
+    
+    # Remove markdown (** **)
+    policy_text = policy_text.replace("**", "")
+    
+    # Split into lines for structured rendering
+    policy_lines = policy_text.split("\n")
+
+
+    risk_explanation = get_risk_explanation(state, district, date)
+
+    # ---- Clean risk explanation for PDF ----
+    explanation_text = risk_explanation.get("explanation", "")
+
+    # Remove markdown formatting (** **)
+    explanation_text = explanation_text.replace("**", "")
+
+    # Split into lines for ReportLab paragraphs
+    explanation_lines = explanation_text.split("\n")
+
+    # ---- Create PDF ----
+    safe_state = state.replace(" ", "_")
+    safe_district = district.replace(" ", "_")
+    
+    file_path = os.path.join(
+        tempfile.gettempdir(),
+        f"policy_brief_{safe_state}_{safe_district}.pdf"
+    )
+    
+
+    doc = SimpleDocTemplate(
+        file_path,
+        pagesize=A4,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    # ---- Title ----
+    story.append(Paragraph("<b>Policy Brief: Aadhaar Service Stress Assessment</b>", styles["Title"]))
+    story.append(Spacer(1, 0.3 * inch))
+
+    # ---- Location ----
+    story.append(Paragraph(f"<b>State:</b> {state.title()}", styles["Normal"]))
+    story.append(Paragraph(f"<b>District:</b> {district.title()}", styles["Normal"]))
+    story.append(Paragraph(f"<b>Assessment Date:</b> {date}", styles["Normal"]))
+    story.append(Spacer(1, 0.2 * inch))
+
+    # ---- Risk ----
+    story.append(Paragraph("<b>1. Current Risk Summary</b>", styles["Heading2"]))
+    story.append(Paragraph(
+        f"Service Stress Risk Score: {risk_score if risk_score is not None else 'N/A'}",
+        styles["Normal"]
+    ))
+    story.append(Spacer(1, 0.2 * inch))
+    # ---- Risk Explanation Narrative ----
+    for line in explanation_lines:
+        if line.strip():
+            story.append(Paragraph(line, styles["Normal"]))
+            story.append(Spacer(1, 0.1 * inch))
+
+    # ---- Forecast ----
+    story.append(Paragraph("<b>2. Forecast Outlook</b>", styles["Heading2"]))
+    story.append(Paragraph(f"Trend: {forecast.get('trend', 'N/A')}", styles["Normal"]))
+    story.append(Paragraph(f"Forecast Confidence: {forecast.get('confidence', 'N/A')}", styles["Normal"]))
+
+    if forecast.get("forecast") and len(forecast["forecast"]) > 0:
+        last_forecast = forecast["forecast"][-1]
+    else:
+        last_forecast = "N/A"
+
+
+    story.append(Paragraph(
+        f"Next-period Risk Projection: {last_forecast}",
+        styles["Normal"]
+    ))
+    
+    story.append(Spacer(1, 0.2 * inch))
+
+    # ---- Data Quality ----
+    story.append(Paragraph("<b>3. Data Quality Assessment</b>", styles["Heading2"]))
+    story.append(Paragraph(f"Records Available: {dq.get('records')}", styles["Normal"]))
+    story.append(Paragraph(f"Coverage: {dq.get('coverage')}%", styles["Normal"]))
+    story.append(Paragraph(f"Missing Periods: {dq.get('missing_periods')}", styles["Normal"]))
+    story.append(Paragraph(f"Quality Rating: {dq.get('quality')}", styles["Normal"]))
+    story.append(Spacer(1, 0.2 * inch))
+
+    # ---- Recommendation ----
+    story.append(Paragraph("<b>4. Policy Recommendation</b>", styles["Heading2"]))
+    story.append(Spacer(1, 0.15 * inch))
+
+    for line in policy_lines:
+        if line.strip():
+            # Emphasize numbered or priority lines
+            if line.strip().startswith(tuple(str(i) for i in range(1, 10))) or "[" in line:
+                story.append(Paragraph(f"<b>{line}</b>", styles["Normal"]))
+            else:
+                story.append(Paragraph(line, styles["Normal"]))
+
+            story.append(Spacer(1, 0.1 * inch))
+
+
+    # ---- Risk Trend + Forecast Plot ----
+    trend_df = df[
+        (df["state"] == state) &
+        (df["district"] == district)
+    ].sort_values("date")
+
+    plt.figure(figsize=(6, 3))
+    plt.plot(trend_df["date"], trend_df["service_stress_risk"], label="Historical")
+
+    forecast_values = forecast.get("forecast", [])
+    if forecast_values:
+        future_dates = pd.date_range(
+            start=trend_df["date"].max(),
+            periods=len(forecast_values) + 1,
+            freq="M"
+        )[1:]
+        plt.plot(future_dates, forecast_values, linestyle="--", label="Forecast")
+
+    plt.title("Service Stress Risk Trend")
+    plt.legend()
+
+    plot_path = os.path.join(tempfile.gettempdir(),f"risk_trend_{safe_state}_{safe_district}.png")
+    plt.tight_layout()
+    plt.savefig(plot_path)
+    plt.close()
+
+    story.append(Spacer(1, 0.3 * inch))
+    story.append(Paragraph("<b>5. Risk Trend Analysis</b>", styles["Heading2"]))
+    story.append(Image(plot_path, width=400, height=200))
+
+    story.append(Spacer(1, 0.2 * inch))
+    story.append(Paragraph("<b>6. State High-Risk Hotspots</b>", styles["Heading2"]))
+
+    latest_date = df["date"].max()
+
+    hotspots = (
+        df[(df["state"] == state) & (df["date"] == latest_date)]
+        .sort_values("service_stress_risk", ascending=False)
+        .head(5)
+    )
+
+    for _, row in hotspots.iterrows():
+        story.append(Paragraph(
+            f"{row['district'].title()} – Risk Score: {row['service_stress_risk']:.4f}",
+            styles["Normal"]
+        ))
+
+    story.append(Spacer(1, 0.2 * inch))
+    story.append(Paragraph("<b>7. Model Reliability</b>", styles["Heading2"]))
+    story.append(Paragraph(
+        "This model estimates continuous Aadhaar service stress risk scores and is evaluated using multiple quantitative reliability indicators to ensure decision-grade outputs. "
+        "The model achieves a Mean Absolute Error (MAE) of 0.0001 and a Root Mean Squared Error (RMSE) of 0.0003, indicating very high numerical accuracy and minimal prediction deviation. "
+        "A Spearman Rank Correlation of 0.999 demonstrates near-perfect consistency in ranking districts by relative risk levels, ensuring reliable prioritization of high-risk areas. "
+        "Additionally, the model exhibits 100% stability among the top 20 high-risk districts, confirming that identified hotspots remain consistent across reporting periods without excessive fluctuation. "
+        "Overall, these metrics indicate that the model is highly reliable for risk monitoring, district comparison, and administrative decision support.",
+        styles["Normal"]
+    ))
+
+    # ---- District Comparison (Optional – shown only if selected) ----
+    if compare_district:
+        compare_row = df[
+            (df["state"] == state) &
+            (df["district"] == compare_district) &
+            (df["date"].dt.date == pd.to_datetime(date).date())
+        ]
+
+        if not compare_row.empty:
+            compare_risk = float(compare_row.iloc[0]["service_stress_risk"])
+
+            story.append(Spacer(1, 0.3 * inch))
+            story.append(Paragraph("<b>9. District Comparison</b>", styles["Heading2"]))
+
+            story.append(Paragraph(
+                f"<b>{district.title()}</b> – Risk Score: {risk_score:.4f}",
+                styles["Normal"]
+            ))
+            story.append(Paragraph(
+                f"<b>{compare_district.title()}</b> – Risk Score: {compare_risk:.4f}",
+                styles["Normal"]
+            ))
+
+            # Simple comparative insight
+            if risk_score > compare_risk:
+                insight = f"{district.title()} exhibits higher service stress compared to {compare_district.title()}."
+            elif risk_score < compare_risk:
+                insight = f"{compare_district.title()} exhibits higher service stress compared to {district.title()}."
+            else:
+                insight = "Both districts exhibit similar service stress levels."
+
+            story.append(Spacer(1, 0.15 * inch))
+            story.append(Paragraph(
+                f"<i>{insight}</i>",
+                styles["Normal"]
+            ))
+    print("COMPARE DISTRICT:", compare_district)
+
+
+    doc.build(story)
+
+    return FileResponse(
+        path=file_path,
+        filename=f"policy_brief_{state}_{district}.pdf",
+        media_type="application/pdf"
+    )
+
+
 
 @app.get("/download-ranked-data")
 def download_ranked_data():
