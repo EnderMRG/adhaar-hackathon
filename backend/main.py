@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
 
 
@@ -829,9 +828,9 @@ def download_ranked_data():
 BASE_DIR = Path(__file__).resolve().parent          # backend/
 FRONTEND_DIR = BASE_DIR.parent / "frontend"         # frontend/
 
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+# serve frontend folder files under /static
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def serve_frontend():
-    return FileResponse(FRONTEND_DIR / "index.html")
-
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
