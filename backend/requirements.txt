@@ -1,16 +1,15 @@
-fastapi==0.110.0
-uvicorn==0.29.0
+fastapi
+uvicorn
 
-pandas==2.2.2
-numpy==1.26.4
-scikit-learn==1.4.2
-joblib==1.4.2
+pandas
+numpy
+scikit-learn
+joblib
 
-statsmodels==0.14.1
+statsmodels
 
-python-dotenv==1.0.1
-google-generativeai==0.5.4
+python-dotenv
+google-generativeai
 
-matplotlib==3.8.4
-
-reportlab==3.6.13
+matplotlib
+reportlab
