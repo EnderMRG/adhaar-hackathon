@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
+from pathlib import Path
 
 
 
@@ -825,11 +826,12 @@ def download_ranked_data():
         print("CSV GENERATION ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))
     
-app.mount("/static", StaticFiles(directory="static"), name="static")
+BASE_DIR = Path(__file__).resolve().parent  # backend folder
+
+# Serve everything inside backend/ as static
+app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
+
 @app.get("/")
 def serve_frontend():
-    return FileResponse("static/index.html")
+    return FileResponse(BASE_DIR / "index.html")
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
