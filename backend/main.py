@@ -668,7 +668,7 @@ def generate_policy_brief_pdf(state: str, district: str, date: str, compare_dist
 
     for line in policy_lines:
         if line.strip():
-            # Emphasize numbered or priority lines
+
             if line.strip().startswith(tuple(str(i) for i in range(1, 10))) or "[" in line:
                 story.append(Paragraph(f"<b>{line}</b>", styles["Normal"]))
             else:
@@ -735,7 +735,7 @@ def generate_policy_brief_pdf(state: str, district: str, date: str, compare_dist
         styles["Normal"]
     ))
 
-    # ---- District Comparison (Optional – shown only if selected) ----
+    # ---- District Comparison  ----
     if compare_district:
         compare_row = df[
             (df["state"] == state) &
@@ -758,7 +758,6 @@ def generate_policy_brief_pdf(state: str, district: str, date: str, compare_dist
                 styles["Normal"]
             ))
 
-            # Simple comparative insight
             if risk_score > compare_risk:
                 insight = f"{district.title()} exhibits higher service stress compared to {compare_district.title()}."
             elif risk_score < compare_risk:
@@ -790,7 +789,6 @@ def download_ranked_data():
         if df.empty:
             raise HTTPException(status_code=400, detail="Dataset is empty")
 
-        # Replicate Streamlit logic EXACTLY
         ranked_df = (
             df.groupby("district")
             .agg({
@@ -834,3 +832,7 @@ app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 @app.get("/", include_in_schema=False)
 def serve_frontend():
     return FileResponse(str(FRONTEND_DIR / "index.html"))
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

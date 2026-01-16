@@ -26,18 +26,18 @@
       background-color: #f8fafc;
     }
 
-/* Blurred static background image */
+
     body::before {
       content: "";
       position: fixed;
       inset: 0;
-      background-image: url("/static/bg.jpg"); /* your image path */
+      background-image: url("/static/bg.jpg");
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
       filter: blur(6px);
-      transform: scale(1.05); /* prevents blur edges */
-      opacity: 0.25;          /* soft, professional */
+      transform: scale(1.05); 
+      opacity: 0.25;          
       z-index: -1;
     }
 
@@ -128,7 +128,6 @@
       margin: 0;
     }
 
-    /* Metrics layout */
     .dq-metrics {
       display: flex;
       flex-direction: column;
@@ -141,12 +140,11 @@
       align-items: center;
     }
 
-    /* Labels & values */
     .dq-label {
       font-size: 13px;
-      color: #6b7280; /* muted gray */
+      color: #6b7280; 
     }
-
+    
     .dq-value {
       font-size: 14px;
       font-weight: 600;
@@ -159,7 +157,6 @@
       color: #374151;
     }
 
-    /* Badge */
     .dq-badge {
       font-size: 11px;
       font-weight: 700;
@@ -736,7 +733,14 @@ document.getElementById("compareDistrict").addEventListener("change", (e) => {
 
 
 window.addEventListener("DOMContentLoaded", async () => {
-  await loadStates();
+  try {
+    await wakeBackend(); 
+    await loadStates();
+  } catch (err) {
+    alert("Server is waking up. Please wait 20–40 seconds and refresh.\n\n" + err.message);
+    return;
+  }
+
   document.getElementById("state").addEventListener("change", loadDistricts);
   document.getElementById("district").addEventListener("change", loadDates);
 });
@@ -1246,7 +1250,27 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+async function wakeBackend() {
+  const maxTries = 12; // ~1 min
+  for (let i = 1; i <= maxTries; i++) {
+    try {
+      console.log(`Waking backend... attempt ${i}`);
+      const res = await fetch(`${API_URL}/health`, { cache: "no-store" });
 
+      if (res.ok) {
+        console.log("Backend awake ✅");
+        return true;
+      }
+    } catch (err) {
+      console.log("Backend still sleeping...", err.message);
+    }
+
+    // wait 5 sec and retry
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+
+  throw new Error("Backend is taking too long to wake up.");
+}
 
 </script>
 
