@@ -98,9 +98,9 @@ def get_risk(state: str, district: str, date: str):
 @app.get("/risk-verdict/{risk_score}")
 def get_risk_verdict(risk_score: float):
     """Classify risk as LOW, MEDIUM, or HIGH"""
-    if risk_score < 0.4:
+    if risk_score < 0.01:
         return {"verdict": "LOW", "description": "Minimal service stress - operations running smoothly"}
-    elif risk_score < 0.7:
+    elif risk_score < 0.03:
         return {"verdict": "MEDIUM", "description": "Moderate service stress - requires monitoring"}
     else:
         return {"verdict": "HIGH", "description": "High service stress - immediate attention needed"}
