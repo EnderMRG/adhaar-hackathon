@@ -439,71 +439,162 @@ Return in Markdown.
 
 @app.get("/risk-explanation/{state}/{district}/{date}")
 def get_risk_explanation(state: str, district: str, date: str):
-    """Generate detailed explanation for why district is risky"""
+    """Generate detailed explanation for why district is risky (Gemini + fallback)"""
     try:
         row = df[
             (df["state"] == state) &
             (df["district"] == district) &
             (df["date"].dt.date == pd.to_datetime(date).date())
         ]
-        
+
         if row.empty:
             return {"explanation": "No data available"}
-        
+
         r = row.iloc[0]
         risk_score = float(r["service_stress_risk"]) if not pd.isna(r["service_stress_risk"]) else 0
         bio_ratio = float(r["biometric_to_enrolment_ratio"]) if not pd.isna(r["biometric_to_enrolment_ratio"]) else 0
         child_pressure = float(r["child_update_pressure"]) if not pd.isna(r["child_update_pressure"]) else 0
         elderly_pressure = float(r["elderly_update_pressure"]) if not pd.isna(r["elderly_update_pressure"]) else 0
-        
-        # Generate detailed explanation based on data
+
         explanation = f"**District Analysis for {district}, {state} (Date: {date})**\n\n"
-        
+
         # Risk Level Assessment
         if risk_score < 0.001:
-            explanation += "**Overall Risk Assessment:** This district demonstrates exceptionally low service stress with highly efficient Aadhaar operations. The minimal risk score indicates that biometric enrollment and update processes are operating at optimal capacity with minimal operational strain.\n\n"
+            explanation += (
+                "**Overall Risk Assessment:** This district demonstrates exceptionally low service stress with highly efficient Aadhaar operations. "
+                "The minimal risk score indicates that biometric enrollment and update processes are operating at optimal capacity with minimal operational strain.\n\n"
+            )
         elif risk_score < 0.01:
-            explanation += "**Overall Risk Assessment:** This district exhibits low service stress with stable and reliable operations. The risk metrics indicate well-balanced workflow management and adequate infrastructure to handle current demand for biometric services.\n\n"
+            explanation += (
+                "**Overall Risk Assessment:** This district exhibits low service stress with stable and reliable operations. "
+                "The risk metrics indicate well-balanced workflow management and adequate infrastructure to handle current demand for biometric services.\n\n"
+            )
         elif risk_score < 0.03:
-            explanation += "**Overall Risk Assessment:** This district shows moderate service stress that warrants active monitoring and proactive management. While operations remain functional, there are indicators of increasing pressure on existing infrastructure and resources.\n\n"
+            explanation += (
+                "**Overall Risk Assessment:** This district shows moderate service stress that warrants active monitoring and proactive management. "
+                "While operations remain functional, there are indicators of increasing pressure on existing infrastructure and resources.\n\n"
+            )
         else:
-            explanation += "**Overall Risk Assessment:** This district experiences significant service stress with elevated risk of operational challenges. Immediate attention to infrastructure and resource allocation is recommended to prevent service degradation.\n\n"
-        
+            explanation += (
+                "**Overall Risk Assessment:** This district experiences significant service stress with elevated risk of operational challenges. "
+                "Immediate attention to infrastructure and resource allocation is recommended to prevent service degradation.\n\n"
+            )
+
         # Detailed Factor Analysis
         explanation += "**Detailed Factor Analysis:**\n\n"
-        
+
         explanation += f"1. **Biometric-to-Enrollment Ratio ({bio_ratio:.2f}):** "
         if bio_ratio < 2:
-            explanation += "This ratio is excellent, indicating more new enrollments than updates. This suggests a growing biometric database and healthy expansion of Aadhaar coverage in the district.\n\n"
+            explanation += (
+                "This ratio is excellent, indicating more new enrollments than updates. "
+                "This suggests a growing biometric database and healthy expansion of Aadhaar coverage in the district.\n\n"
+            )
         elif bio_ratio < 5:
-            explanation += "This ratio is balanced, showing a healthy proportion of updates to new enrollments. This indicates mature coverage with stable maintenance of existing records.\n\n"
+            explanation += (
+                "This ratio is balanced, showing a healthy proportion of updates to new enrollments. "
+                "This indicates mature coverage with stable maintenance of existing records.\n\n"
+            )
         elif bio_ratio < 10:
-            explanation += "This ratio is relatively high, indicating significantly more biometric updates than new enrollments. This suggests the district has high coverage saturation and is experiencing substantial workload from updating existing records. The high ratio may strain operational resources as updating existing records requires verification and validation procedures.\n\n"
+            explanation += (
+                "This ratio is relatively high, indicating significantly more biometric updates than new enrollments. "
+                "This suggests the district has high coverage saturation and is experiencing substantial workload from updating existing records. "
+                "The high ratio may strain operational resources as updating existing records requires verification and validation procedures.\n\n"
+            )
         else:
-            explanation += "This ratio is very high, indicating a substantial number of biometric updates relative to new enrollments. This suggests the district has achieved near-complete coverage and is now managing a significant volume of record updates. Such high activity could indicate address changes, demographic updates, or periodic re-enrollment activities consuming considerable operational resources.\n\n"
-        
+            explanation += (
+                "This ratio is very high, indicating a substantial number of biometric updates relative to new enrollments. "
+                "This suggests the district has achieved near-complete coverage and is now managing a significant volume of record updates. "
+                "Such high activity could indicate address changes, demographic updates, or periodic re-enrollment activities consuming considerable operational resources.\n\n"
+            )
+
         explanation += f"2. **Child Update Pressure ({child_pressure:.6f}):** "
         if child_pressure < 0.001:
-            explanation += "Minimal child biometric update activity. Child-related updates are not a significant driver of service stress in this district.\n\n"
+            explanation += (
+                "Minimal child biometric update activity. Child-related updates are not a significant driver of service stress in this district.\n\n"
+            )
         elif child_pressure < 0.01:
-            explanation += "Low to moderate child biometric update activity. There is some workload from child-related updates, but it remains manageable within current operational capacity.\n\n"
+            explanation += (
+                "Low to moderate child biometric update activity. There is some workload from child-related updates, "
+                "but it remains manageable within current operational capacity.\n\n"
+            )
         else:
-            explanation += f"Significant child biometric update pressure. The district is experiencing notable demand for child-related biometric services. This may be due to periodic biometric update campaigns for school-age children, age-based re-enrollment mandates, or demographic initiatives. These activities require specialized handling and may impact overall service capacity.\n\n"
-        
+            explanation += (
+                "Significant child biometric update pressure. The district is experiencing notable demand for child-related biometric services. "
+                "This may be due to periodic biometric update campaigns for school-age children, age-based re-enrollment mandates, or demographic initiatives. "
+                "These activities require specialized handling and may impact overall service capacity.\n\n"
+            )
+
         explanation += f"3. **Elderly Update Pressure ({elderly_pressure:.6f}):** "
         if elderly_pressure < 0.001:
-            explanation += "Minimal elderly biometric update activity. Elderly-related updates are not a significant contributor to service stress.\n\n"
+            explanation += (
+                "Minimal elderly biometric update activity. Elderly-related updates are not a significant contributor to service stress.\n\n"
+            )
         elif elderly_pressure < 0.01:
-            explanation += "Low to moderate elderly biometric update activity. Some workload exists but remains well within operational capacity.\n\n"
+            explanation += (
+                "Low to moderate elderly biometric update activity. Some workload exists but remains well within operational capacity.\n\n"
+            )
         else:
-            explanation += f"Notable elderly biometric update pressure. The district is managing significant demand for elderly-focused biometric services. This may reflect aging population demographics, health-related biometric updates, or special outreach programs for senior citizens. Elderly beneficiaries often require additional time and support during biometric capture, potentially impacting throughput.\n\n"
-        
-        # Conclusion
-        explanation += "**Key Insight:** This district exhibits moderate service stress, primarily driven by a high biometric-to-enrollment ratio. This suggests the district has achieved high Aadhaar penetration and is now in a phase of managing updates and demographic changes rather than new enrollments. Infrastructure and staffing should be calibrated to handle this update-heavy workload efficiently."
-        
-        return {"explanation": explanation}
+            explanation += (
+                "Notable elderly biometric update pressure. The district is managing significant demand for elderly-focused biometric services. "
+                "This may reflect aging population demographics, health-related biometric updates, or special outreach programs for senior citizens. "
+                "Elderly beneficiaries often require additional time and support during biometric capture, potentially impacting throughput.\n\n"
+            )
+
+        explanation += (
+            "**Key Insight:** This district exhibits moderate service stress, primarily driven by a high biometric-to-enrollment ratio. "
+            "This suggests the district has achieved high Aadhaar penetration and is now in a phase of managing updates and demographic changes rather than new enrollments. "
+            "Infrastructure and staffing should be calibrated to handle this update-heavy workload efficiently."
+        )
+
+        if not GEMINI_API_KEY:
+            return {"explanation": explanation}
+
+        try:
+            gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+
+            prompt = f"""
+You are a UIDAI operations analyst.
+
+Write a clear, professional explanation for Aadhaar service stress in a district.
+Keep it administrative and actionable.
+
+District: {district}, State: {state}
+Date: {date}
+
+Metrics:
+- Risk Score: {risk_score:.4f}
+- Biometric-to-Enrolment Ratio: {bio_ratio:.2f}
+- Child Update Pressure: {child_pressure:.6f}
+- Elderly Update Pressure: {elderly_pressure:.6f}
+
+Base Explanation (rule engine):
+{explanation}
+
+Now rewrite the explanation in this structure:
+1) Summary (2 lines)
+2) What is driving stress? (bullets)
+3) What could happen if ignored? (1 short paragraph)
+4) What to monitor next month (3 bullet KPIs)
+
+Keep it under 200 words.
+Return in Markdown.
+"""
+
+            ai_response = gemini_model.generate_content(prompt)
+            ai_text = ai_response.text.strip() if ai_response and ai_response.text else ""
+
+            if ai_text:
+                return {"explanation": ai_text}
+
+            return {"explanation": explanation}
+
+        except Exception as gemini_error:
+            print("GEMINI ERROR (risk-explanation):", gemini_error)
+            return {"explanation": explanation}
+
     except Exception as e:
         return {"explanation": f"Unable to generate explanation: {str(e)}"}
+
 
 @app.get("/model-stats")
 def get_model_stats():
