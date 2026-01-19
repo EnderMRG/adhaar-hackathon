@@ -313,7 +313,7 @@
         <!-- Key Metrics Grid -->
         <div class="bg-white rounded-xl card-elevated p-6 md:p-8">
           <h2 class="text-2xl font-bold mb-6 accent-line pl-4" style="color: var(--color-neutral-dark);">Performance Metrics</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <div class="p-6 rounded-lg" style="background-color: rgba(249, 115, 22, 0.05); border-left: 3px solid var(--color-saffron);">
               <p class="text-sm font-medium text-gray-600 mb-2">Service Stress Risk Score</p>
               <p id="metric-risk" class="text-3xl font-bold" style="color: var(--color-saffron);">-</p>
@@ -333,6 +333,11 @@
               <p class="text-sm font-medium text-gray-600 mb-2">Elderly Update Pressure</p>
               <p id="metric-elderly" class="text-3xl font-bold" style="color: var(--color-accent);">-</p>
               <p class="text-xs text-gray-500 mt-2">Demand indicator</p>
+            </div>
+            <div class="p-6 rounded-lg" style="background-color: rgba(220, 38, 38, 0.05); border-left: 3px solid rgb(220, 38, 38);">
+              <p class="text-sm font-medium text-gray-600 mb-2">Anomaly Status</p>
+              <p id="metric-anomaly" class="text-3xl font-bold" style="color: rgb(220, 38, 38);">-</p>
+              <p id="metric-anomaly-threshold" class="text-xs text-gray-500 mt-2">Rolling threshold: -</p>
             </div>
           </div>
         </div>
@@ -847,6 +852,7 @@ async function fetchAllData() {
     const verdictRes = await fetch(`${API_URL}/risk-verdict/${risk.risk_score}`).then(r => r.json());
 
     updateMetrics(risk);
+    await fetchAndDisplayAnomaly(state, district, date);
     updateVerdict(verdictRes);
     updatePercentile(percentile);
     updateTrend(trend);
@@ -1269,6 +1275,42 @@ async function wakeBackend() {
 
   throw new Error("Backend is taking too long to wake up.");
 }
+
+async function fetchAndDisplayAnomaly(state, district, date) {
+  try {
+    const backendUrl = API_URL;
+
+    const res = await fetch(
+      `${backendUrl}/risk-anomaly/${encodeURIComponent(state)}/${encodeURIComponent(district)}/${encodeURIComponent(date)}`
+    );
+
+    const data = await res.json();
+
+    const anomalyEl = document.getElementById("metric-anomaly");
+    const thresholdEl = document.getElementById("metric-anomaly-threshold");
+
+    if (!anomalyEl || !thresholdEl) return;
+
+    if (data.reason) {
+      anomalyEl.textContent = "N/A";
+      thresholdEl.textContent = data.reason;
+      return;
+    }
+
+    anomalyEl.textContent = data.anomaly ? "SPIKE" : "NORMAL";
+
+    thresholdEl.textContent =
+      data.threshold !== null && data.threshold !== undefined
+        ? `Rolling threshold: ${Number(data.threshold).toFixed(4)}`
+        : "Rolling threshold: N/A";
+  } catch (err) {
+    console.error("Anomaly fetch error:", err);
+    document.getElementById("metric-anomaly").textContent = "N/A";
+    document.getElementById("metric-anomaly-threshold").textContent =
+      "Unable to load anomaly";
+  }
+}
+
 
 </script>
 

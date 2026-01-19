@@ -231,6 +231,62 @@ def get_forecast_for_district(state: str, district: str, steps: int = 6):
 
     return forecast, trend, confidence
 
+def detect_risk_anomaly(state: str, district: str, date: str, window: int = 6, sigma: float = 2.0):
+    """
+    Flags anomaly if current risk > rolling_mean + sigma * rolling_std
+    Uses previous `window` months as baseline (excluding current month).
+    """
+    data = df[
+        (df["state"] == state) &
+        (df["district"] == district)
+    ].sort_values("date")
+
+    if data.empty:
+        return {"anomaly": False, "reason": "No data"}
+
+    data = data.dropna(subset=["service_stress_risk"])
+    if data.empty:
+        return {"anomaly": False, "reason": "No risk values"}
+
+    target_date = pd.to_datetime(date).date()
+
+    # Row for current date
+    current_row = data[data["date"].dt.date == target_date]
+    if current_row.empty:
+        return {"anomaly": False, "reason": "No record for selected date"}
+
+    current_risk = float(current_row.iloc[0]["service_stress_risk"])
+
+    # Use only previous months as baseline
+    baseline = data[data["date"].dt.date < target_date].tail(window)
+
+    if len(baseline) < 3:
+        return {"anomaly": False, "reason": "Insufficient history for anomaly detection"}
+
+    mean = float(baseline["service_stress_risk"].mean())
+    std = float(baseline["service_stress_risk"].std(ddof=0))  # population std
+    threshold = mean + sigma * std
+
+    anomaly = current_risk > threshold
+
+    return {
+        "anomaly": anomaly,
+        "current_risk": round(current_risk, 4),
+        "rolling_mean": round(mean, 4),
+        "rolling_std": round(std, 4),
+        "threshold": round(threshold, 4),
+        "window_months": window,
+        "sigma": sigma
+    }
+
+
+@app.get("/risk-anomaly/{state}/{district}/{date}")
+def get_risk_anomaly(state: str, district: str, date: str, window: int = 6, sigma: float = 2.0):
+    """
+    Returns anomaly status for a district on a given date.
+    """
+    return detect_risk_anomaly(state, district, date, window=window, sigma=sigma)
+
 
 
 @app.get("/policy-recommendation/{state}/{district}/{date}")
