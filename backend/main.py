@@ -28,10 +28,14 @@ from fastapi.staticfiles import StaticFiles
 
 
 
-load_dotenv()
+BACKEND_DIR = Path(__file__).resolve().parent
+load_dotenv(BACKEND_DIR / ".env")  # works locally if .env exists
 
-# Configure Gemini API
+# Configure Gemini API (works on Render if env var is set in Render dashboard)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+print("GEMINI KEY FOUND:", bool(GEMINI_API_KEY))  # remove later if you want
+
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
@@ -211,10 +215,10 @@ def get_forecast_for_district(state: str, district: str, steps: int = 6):
         return forecast, "stable", "LOW"
     
     # ---- ARIMA FORECAST (MAIN PATH) ----
-    model = ARIMA(series, order=(2, 1, 2))
-    model_fit = model.fit()
+    arima_model = ARIMA(series, order=(2, 1, 2))
+    arima_fit = arima_model.fit()
 
-    forecast = model_fit.forecast(steps=steps).tolist()
+    forecast = arima_fit.forecast(steps=steps).tolist()
 
     first, last = forecast[0], forecast[-1]
     if last > first * 1.05:
@@ -230,10 +234,9 @@ def get_forecast_for_district(state: str, district: str, steps: int = 6):
 
 
 
-
 @app.get("/policy-recommendation/{state}/{district}/{date}")
 def get_policy_recommendation(state: str, district: str, date: str):
-    """Generate comprehensive policy recommendation based on risk data"""
+    """Generate comprehensive policy recommendation based on risk data (Gemini + fallback)"""
     try:
         recommendation = ""
 
@@ -242,10 +245,10 @@ def get_policy_recommendation(state: str, district: str, date: str):
             (df["district"] == district) &
             (df["date"].dt.date == pd.to_datetime(date).date())
         ]
-        
+
         if row.empty:
             return {"recommendation": "No data available for recommendation"}
-        
+
         r = row.iloc[0]
         risk_score = float(r["service_stress_risk"]) if not pd.isna(r["service_stress_risk"]) else 0
         bio_ratio = float(r["biometric_to_enrolment_ratio"]) if not pd.isna(r["biometric_to_enrolment_ratio"]) else 0
@@ -253,105 +256,186 @@ def get_policy_recommendation(state: str, district: str, date: str):
         elderly_pressure = float(r["elderly_update_pressure"]) if not pd.isna(r["elderly_update_pressure"]) else 0
 
         forecast, future_trend, confidence = get_forecast_for_district(state, district)
-
         avg_future_risk = sum(forecast) / len(forecast) if forecast else risk_score
-        print("POLICY AI → TREND:", future_trend, "AVG:", avg_future_risk)
 
-        
-        # Generate comprehensive recommendations based on data
+        # -----------------------------
+        # 1) RULE-BASED BASE RECOMMENDATION (Always Works)
+        # -----------------------------
         recommendation += (
             f"**Forecast Context:**\n"
             f"• Trend: **{future_trend.upper()}**\n"
-            f"• Confidence: **{confidence}**\n\n"
+            f"• Confidence: **{confidence}**\n"
+            f"• Avg Future Risk (6 periods): **{avg_future_risk:.4f}**\n\n"
         )
-        
+
         recommendations = []
-        
+
         # Biometric ratio recommendations
         if bio_ratio > 8:
             recommendations.append({
                 "priority": "HIGH",
                 "title": "Infrastructure Capacity Enhancement",
-                "description": f"Given the exceptionally high biometric-to-enrollment ratio of {bio_ratio:.2f}, the district requires immediate investment in biometric infrastructure. Establish additional enrollment centers with modern biometric capture devices (fingerprint scanners, iris readers) to handle the high volume of update transactions. Implement queue management systems and stagger appointment schedules to distribute workload evenly throughout service hours."
+                "description": (
+                    f"Given the exceptionally high biometric-to-enrollment ratio of {bio_ratio:.2f}, "
+                    "the district requires immediate investment in biometric infrastructure. "
+                    "Establish additional enrollment centers with modern biometric capture devices "
+                    "(fingerprint scanners, iris readers) to handle the high volume of update transactions. "
+                    "Implement queue management systems and stagger appointment schedules."
+                )
             })
         elif bio_ratio > 5:
             recommendations.append({
                 "priority": "MEDIUM",
                 "title": "Staffing and Resource Optimization",
-                "description": f"The biometric-to-enrollment ratio of {bio_ratio:.2f} indicates significant update workload. Increase staffing levels at enrollment centers, particularly focusing on trained biometric operators and data entry personnel. Provide regular training programs to ensure staff can efficiently process high-volume transactions while maintaining data quality standards."
+                "description": (
+                    f"The biometric-to-enrollment ratio of {bio_ratio:.2f} indicates significant update workload. "
+                    "Increase staffing levels at enrollment centers, focusing on trained biometric operators and "
+                    "data entry personnel. Provide regular training programs to maintain data quality."
+                )
             })
-        
+
         # Child pressure recommendations
         if child_pressure > 0.01:
             recommendations.append({
                 "priority": "MEDIUM",
                 "title": "Specialized Child Services Centers",
-                "description": f"The child update pressure metric ({child_pressure:.6f}) indicates substantial activity. Establish dedicated child-friendly enrollment centers with trained pediatric specialists who understand the unique challenges of capturing biometrics from children. Implement flexible scheduling options aligned with school calendars and conduct mobile outreach camps in educational institutions."
+                "description": (
+                    f"The child update pressure metric ({child_pressure:.6f}) indicates substantial activity. "
+                    "Establish dedicated child-friendly enrollment centers and run school-based outreach camps."
+                )
             })
         elif child_pressure > 0.005:
             recommendations.append({
                 "priority": "LOW",
                 "title": "Child Services Enhancement",
-                "description": "Consider establishing periodic child enrollment camps to consolidate child-related updates and reduce ongoing pressure on regular centers."
+                "description": (
+                    "Consider periodic child enrollment camps to consolidate child-related updates and reduce "
+                    "ongoing pressure on regular centers."
+                )
             })
-        
+
         # Elderly pressure recommendations
         if elderly_pressure > 0.01:
             recommendations.append({
                 "priority": "MEDIUM",
                 "title": "Elderly-Focused Service Centers",
-                "description": f"The elderly update pressure metric ({elderly_pressure:.6f}) suggests significant demand. Establish specialized centers or dedicated time slots for elderly beneficiaries with accessibility features (ramps, seating areas, adequate lighting). Train staff in patience and communication with elderly citizens. Consider home-based enrollment for bedridden or immobile elderly individuals."
+                "description": (
+                    f"The elderly update pressure metric ({elderly_pressure:.6f}) suggests significant demand. "
+                    "Provide elderly-friendly time slots, accessibility support, and consider home-based services "
+                    "for immobile beneficiaries."
+                )
             })
         elif elderly_pressure > 0.005:
             recommendations.append({
                 "priority": "LOW",
                 "title": "Elderly Services Improvement",
-                "description": "Implement age-friendly service protocols and provide additional support during biometric capture for elderly beneficiaries."
+                "description": (
+                    "Implement age-friendly service protocols and provide extra support during biometric capture."
+                )
             })
-        
+
         # Overall risk recommendations
         if risk_score > 0.04 or future_trend == "increasing":
             recommendations.insert(0, {
                 "priority": "CRITICAL" if risk_score > 0.04 else "HIGH",
                 "title": "Proactive Service Load Management",
                 "description": (
-                    "Current service stress levels combined with forecasted trends "
-                    f"indicate a {future_trend} risk trajectory. "
-                    "It is recommended to initiate proactive capacity planning, "
-                    "including temporary staffing augmentation, extended operating hours, "
-                    "and advance preparation of biometric infrastructure."
+                    "Current service stress levels combined with forecasted trends indicate an elevated risk trajectory. "
+                    "Initiate proactive capacity planning including temporary staffing augmentation, extended operating hours, "
+                    "and readiness of biometric infrastructure."
                 )
             })
-
         elif risk_score > 0.025:
             recommendations.insert(0, {
                 "priority": "HIGH",
                 "title": "Preventive Operational Optimization",
                 "description": (
-                    "Service stress levels are manageable at present; however, "
-                    "forecast analysis suggests continued monitoring is essential. "
-                    "Optimize workflows and prepare contingency plans for potential demand escalation."
+                    "Service stress is manageable, but monitoring is essential. Optimize workflows and prepare contingency plans "
+                    "for potential demand escalation."
                 )
             })
-        
-        # Default recommendation if no specific issues
+
         if not recommendations:
             recommendations.append({
                 "priority": "INFORMATIONAL",
                 "title": "Maintain Current Standards",
-                "description": "Current operations are efficiently managed with balanced workload distribution. Continue with existing service delivery protocols and maintain staff training programs to sustain performance levels."
+                "description": (
+                    "Current operations are stable with balanced workload distribution. Maintain staff training and service standards."
+                )
             })
-        
-        # Format recommendations
+
+        # Format rule-based recommendation text
         for idx, rec in enumerate(recommendations, 1):
             recommendation += f"**{idx}. [{rec['priority']}] {rec['title']}**\n"
             recommendation += f"{rec['description']}\n\n"
-        
-        recommendation += "**Implementation Timeline:** Prioritize critical and high-priority recommendations for implementation within 30 days, with medium-priority items scheduled within 60-90 days."
-        
-        return {"recommendation": recommendation}
+
+        recommendation += (
+            "**Implementation Timeline:** Prioritize CRITICAL/HIGH within 30 days. "
+            "MEDIUM within 60–90 days.\n"
+        )
+
+        # -----------------------------
+        # 2) GEMINI ENHANCEMENT (AI Layer)
+        # -----------------------------
+        if not GEMINI_API_KEY:
+            # No key → return rule-based output safely
+            return {"recommendation": recommendation}
+
+        try:
+            gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+
+            prompt = f"""
+You are a senior governance analyst advising UIDAI.
+
+Create a policy recommendation note for the district below.
+Make it professional, structured, and easy to read by administrators.
+
+District: {district}, State: {state}
+Date: {date}
+
+Metrics:
+- Service Stress Risk Score: {risk_score:.4f}
+- Biometric-to-Enrolment Ratio: {bio_ratio:.2f}
+- Child Update Pressure: {child_pressure:.6f}
+- Elderly Update Pressure: {elderly_pressure:.6f}
+
+Forecast:
+- Future Trend: {future_trend}
+- Forecast Confidence: {confidence}
+- Avg Future Risk: {avg_future_risk:.4f}
+
+Base Recommendations (generated by rule engine):
+{recommendation}
+
+Now rewrite the final answer as:
+1) Executive Summary (2–3 lines)
+2) Key Drivers (bullet points)
+3) Action Plan (3–6 actions, with priority tags)
+4) Implementation Timeline (short)
+5) Monitoring KPIs (3 KPIs)
+
+Keep it under 250 words.
+Return in Markdown.
+"""
+
+            ai_response = gemini_model.generate_content(prompt)
+
+            # Gemini output text
+            ai_text = ai_response.text.strip() if ai_response and ai_response.text else ""
+
+            if ai_text:
+                return {"recommendation": ai_text}
+
+            # If Gemini returns empty → fallback
+            return {"recommendation": recommendation}
+
+        except Exception as gemini_error:
+            print("GEMINI ERROR:", gemini_error)
+            return {"recommendation": recommendation}
+
     except Exception as e:
         return {"recommendation": f"Unable to generate recommendation: {str(e)}"}
+
 
 @app.get("/risk-explanation/{state}/{district}/{date}")
 def get_risk_explanation(state: str, district: str, date: str):
