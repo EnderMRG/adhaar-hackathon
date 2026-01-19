@@ -29,28 +29,28 @@ from fastapi.staticfiles import StaticFiles
 
 
 BACKEND_DIR = Path(__file__).resolve().parent
-load_dotenv(BACKEND_DIR / ".env")  # works locally if .env exists
+load_dotenv(BACKEND_DIR / ".env")  
 
-# Configure Gemini API (works on Render if env var is set in Render dashboard)
+# Gemini API 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-print("GEMINI KEY FOUND:", bool(GEMINI_API_KEY))  # remove later if you want
+print("GEMINI KEY FOUND:", bool(GEMINI_API_KEY)) 
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 app = FastAPI(title="Aadhaar Service Stress API")
 
-# Enable CORS for frontend
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load resources - use the directory where this script is located
+# Load resources 
 backend_dir = Path(__file__).parent
 df = pd.read_csv(backend_dir / "aadhaar_merged_dataset.csv")
 df["date"] = pd.to_datetime(df["date"])
@@ -86,7 +86,7 @@ def get_risk(state: str, district: str, date: str):
 
     r = row.iloc[0]
     
-    # Handle NaN values (convert to None or default value)
+    # Handle NaN values 
     def safe_float(val):
         if pd.isna(val):
             return None
@@ -204,7 +204,7 @@ def get_forecast_for_district(state: str, district: str, steps: int = 6):
         data
         .set_index("date")["service_stress_risk"]
         .dropna()
-        .asfreq("MS")  # Monthly Start
+        .asfreq("MS") 
     )
 
     if len(series) < 8:
@@ -214,7 +214,6 @@ def get_forecast_for_district(state: str, district: str, steps: int = 6):
 
         return forecast, "stable", "LOW"
     
-    # ---- ARIMA FORECAST (MAIN PATH) ----
     arima_model = ARIMA(series, order=(2, 1, 2))
     arima_fit = arima_model.fit()
 
@@ -258,9 +257,6 @@ def get_policy_recommendation(state: str, district: str, date: str):
         forecast, future_trend, confidence = get_forecast_for_district(state, district)
         avg_future_risk = sum(forecast) / len(forecast) if forecast else risk_score
 
-        # -----------------------------
-        # 1) RULE-BASED BASE RECOMMENDATION (Always Works)
-        # -----------------------------
         recommendation += (
             f"**Forecast Context:**\n"
             f"• Trend: **{future_trend.upper()}**\n"
@@ -270,7 +266,6 @@ def get_policy_recommendation(state: str, district: str, date: str):
 
         recommendations = []
 
-        # Biometric ratio recommendations
         if bio_ratio > 8:
             recommendations.append({
                 "priority": "HIGH",
@@ -294,7 +289,6 @@ def get_policy_recommendation(state: str, district: str, date: str):
                 )
             })
 
-        # Child pressure recommendations
         if child_pressure > 0.01:
             recommendations.append({
                 "priority": "MEDIUM",
@@ -314,7 +308,6 @@ def get_policy_recommendation(state: str, district: str, date: str):
                 )
             })
 
-        # Elderly pressure recommendations
         if elderly_pressure > 0.01:
             recommendations.append({
                 "priority": "MEDIUM",
@@ -334,7 +327,6 @@ def get_policy_recommendation(state: str, district: str, date: str):
                 )
             })
 
-        # Overall risk recommendations
         if risk_score > 0.04 or future_trend == "increasing":
             recommendations.insert(0, {
                 "priority": "CRITICAL" if risk_score > 0.04 else "HIGH",
@@ -364,7 +356,6 @@ def get_policy_recommendation(state: str, district: str, date: str):
                 )
             })
 
-        # Format rule-based recommendation text
         for idx, rec in enumerate(recommendations, 1):
             recommendation += f"**{idx}. [{rec['priority']}] {rec['title']}**\n"
             recommendation += f"{rec['description']}\n\n"
@@ -374,9 +365,6 @@ def get_policy_recommendation(state: str, district: str, date: str):
             "MEDIUM within 60–90 days.\n"
         )
 
-        # -----------------------------
-        # 2) GEMINI ENHANCEMENT (AI Layer)
-        # -----------------------------
         if not GEMINI_API_KEY:
             # No key → return rule-based output safely
             return {"recommendation": recommendation}
@@ -420,13 +408,11 @@ Return in Markdown.
 
             ai_response = gemini_model.generate_content(prompt)
 
-            # Gemini output text
             ai_text = ai_response.text.strip() if ai_response and ai_response.text else ""
 
             if ai_text:
                 return {"recommendation": ai_text}
 
-            # If Gemini returns empty → fallback
             return {"recommendation": recommendation}
 
         except Exception as gemini_error:
@@ -639,7 +625,6 @@ def risk_forecast(state: str, district: str, steps: int = 6):
             "note": "Fallback forecast due to limited historical data"
         }
 
-    # ---- Lightweight ARIMA ----
     model = ARIMA(series, order=(1, 0, 0))
     model_fit = model.fit()
 
@@ -727,7 +712,6 @@ def get_data_quality(state: str, district: str):
 @app.get("/policy-brief/{state}/{district}/{date}")
 def generate_policy_brief_pdf(state: str, district: str, date: str, compare_district: str | None = None):
 
-    # ---- Fetch analytics ----
     risk_row = df[
         (df["state"] == state) &
         (df["district"] == district) &
@@ -745,28 +729,21 @@ def generate_policy_brief_pdf(state: str, district: str, date: str, compare_dist
     dq = get_data_quality(state, district)
     policy = get_policy_recommendation(state, district, date)
 
-    # ---- Clean policy recommendation for PDF ----
     policy_text = policy.get("recommendation", "")
     
-    # Remove markdown (** **)
     policy_text = policy_text.replace("**", "")
     
-    # Split into lines for structured rendering
     policy_lines = policy_text.split("\n")
 
 
     risk_explanation = get_risk_explanation(state, district, date)
 
-    # ---- Clean risk explanation for PDF ----
     explanation_text = risk_explanation.get("explanation", "")
 
-    # Remove markdown formatting (** **)
     explanation_text = explanation_text.replace("**", "")
 
-    # Split into lines for ReportLab paragraphs
     explanation_lines = explanation_text.split("\n")
 
-    # ---- Create PDF ----
     safe_state = state.replace(" ", "_")
     safe_district = district.replace(" ", "_")
     

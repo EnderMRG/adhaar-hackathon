@@ -1146,7 +1146,7 @@ async function downloadRankedData() {
   try {
     const res = await fetch(`${API_URL}/download-ranked-data`);
 
-    // 🚨 Check if backend actually returned CSV
+    // Check if backend actually returned CSV
     const contentType = res.headers.get("content-type");
 
     if (!res.ok) {
@@ -1154,7 +1154,6 @@ async function downloadRankedData() {
     }
 
     if (!contentType || !contentType.includes("text/csv")) {
-      // Backend sent JSON or empty response
       const text = await res.text();
       throw new Error("Invalid CSV response:\n" + text);
     }
@@ -1241,7 +1240,7 @@ document.addEventListener("DOMContentLoaded", () => {
       `${encodeURIComponent(currentDistrict)}/` +
       `${currentDate}`;
 
-    // 🔹 Include comparison district if selected
+    // Include comparison district if selected
     if (currentCompareDistrict) {
       url += `?compare_district=${encodeURIComponent(currentCompareDistrict)}`;
     }
@@ -1251,7 +1250,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function wakeBackend() {
-  const maxTries = 12; // ~1 min
+  const maxTries = 12; 
   for (let i = 1; i <= maxTries; i++) {
     try {
       console.log(`Waking backend... attempt ${i}`);
@@ -1265,7 +1264,6 @@ async function wakeBackend() {
       console.log("Backend still sleeping...", err.message);
     }
 
-    // wait 5 sec and retry
     await new Promise((r) => setTimeout(r, 5000));
   }
 
